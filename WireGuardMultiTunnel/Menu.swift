@@ -20,7 +20,7 @@ class TunnelDetailMenuItem: NSMenuItem {
 private let tunnelMenuItemHeight: CGFloat = 22
 
 /// Full-width menu row; NSMenu otherwise sizes custom views to fit their subviews only.
-private class TunnelRowMenuItemView: NSView {
+class TunnelRowMenuItemView: NSView {
     init(width: CGFloat) {
         super.init(frame: NSRect(x: 0, y: 0, width: width, height: tunnelMenuItemHeight))
         autoresizingMask = .width
@@ -33,83 +33,137 @@ private class TunnelRowMenuItemView: NSView {
 
     func resizeToMenuWidth(_ menuWidth: CGFloat) {
         setFrameSize(NSSize(width: menuWidth, height: tunnelMenuItemHeight))
+        needsDisplay = true
     }
 }
 
-/// Forwards clicks to the enclosing menu item action (required for `NSMenuItem.view`).
-private class ClickableMenuItemView: TunnelRowMenuItemView {
-    override func mouseUp(with _: NSEvent) {
-        guard let menuItem = enclosingMenuItem,
-              let menu = menuItem.menu,
-              menuItem.isEnabled else { return }
-        menu.cancelTracking()
-        let index = menu.index(of: menuItem)
-        if index >= 0 {
-            menu.performActionForItem(at: index)
-        }
-    }
+/// Tunnel name row. Green full-width background when enabled (connected or bringing up).
+///
+/// Paints green in `draw(_:)` like `TunnelSwitchMenuItemView`. Appearance can be
+/// updated in place — `NSMenu.update()` often will not replace custom views while
+/// the menu is open.
+final class TunnelTitleMenuItemView: TunnelRowMenuItemView {
+    private var showsEnabledBackground: Bool
+    private let nameLabel: NSTextField
+    private var accessoryView: NSView?
+    private var dynamicConstraints: [NSLayoutConstraint] = []
 
-    override func acceptsFirstMouse(for _: NSEvent?) -> Bool {
-        return true
-    }
-}
+    init(title: String, menuWidth: CGFloat, isEnabled: Bool, isPending: Bool) {
+        showsEnabledBackground = isEnabled
+        nameLabel = NSTextField(labelWithString: title)
+        super.init(width: max(menuWidth, 1))
 
-/// Tunnel row while wg-quick is bringing the interface up or down.
-private final class TunnelPendingMenuItemView: TunnelRowMenuItemView {
-    private let spinner = NSProgressIndicator()
+        // Give NSMenu a stable size even before resizeTunnelMenuItemViews runs.
+        setFrameSize(NSSize(width: max(menuWidth, 160), height: tunnelMenuItemHeight))
 
-    init(title: String, menuWidth: CGFloat) {
-        super.init(width: menuWidth)
-
-        let label = NSTextField(labelWithString: title)
-        label.font = NSFont.menuFont(ofSize: 0)
-        label.textColor = .secondaryLabelColor
-        label.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(label)
-
-        spinner.style = .spinning
-        spinner.controlSize = .small
-        spinner.isDisplayedWhenStopped = false
-        spinner.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(spinner)
-        spinner.startAnimation(nil)
-
-        NSLayoutConstraint.activate([
-            label.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 12),
-            label.centerYAnchor.constraint(equalTo: centerYAnchor),
-            label.trailingAnchor.constraint(lessThanOrEqualTo: spinner.leadingAnchor, constant: -8),
-            spinner.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -10),
-            spinner.centerYAnchor.constraint(equalTo: centerYAnchor),
-        ])
-    }
-}
-
-/// Active tunnel name row: green background and "(connected)" label.
-private final class TunnelNameMenuItemView: ClickableMenuItemView {
-    init(title: String, menuWidth: CGFloat) {
-        super.init(width: menuWidth)
-        wantsLayer = true
-        layer?.backgroundColor = NSColor.systemGreen.cgColor
-
-        let nameLabel = NSTextField(labelWithString: title)
         nameLabel.font = NSFont.menuFont(ofSize: 0)
-        nameLabel.textColor = .black
+        nameLabel.drawsBackground = false
+        nameLabel.isBordered = false
+        nameLabel.isEditable = false
         nameLabel.translatesAutoresizingMaskIntoConstraints = false
         addSubview(nameLabel)
-
-        let statusLabel = NSTextField(labelWithString: "(connected)")
-        statusLabel.font = NSFont.menuFont(ofSize: 0)
-        statusLabel.textColor = NSColor.black.withAlphaComponent(0.6)
-        statusLabel.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(statusLabel)
 
         NSLayoutConstraint.activate([
             nameLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 12),
             nameLabel.centerYAnchor.constraint(equalTo: centerYAnchor),
-            statusLabel.leadingAnchor.constraint(equalTo: nameLabel.trailingAnchor, constant: 6),
-            statusLabel.centerYAnchor.constraint(equalTo: centerYAnchor),
-            statusLabel.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -8),
         ])
+
+        applyAppearance(isEnabled: isEnabled, isPending: isPending)
+    }
+
+    /// Update green/title state without replacing the menu item view (needed while menu is open).
+    func applyAppearance(isEnabled: Bool, isPending: Bool) {
+        showsEnabledBackground = isEnabled
+        nameLabel.textColor = isEnabled ? .black : .labelColor
+
+        NSLayoutConstraint.deactivate(dynamicConstraints)
+        dynamicConstraints.removeAll()
+        accessoryView?.removeFromSuperview()
+        accessoryView = nil
+
+        if isPending {
+            let spinner = NSProgressIndicator()
+            spinner.style = .spinning
+            spinner.controlSize = .small
+            spinner.isDisplayedWhenStopped = false
+            spinner.translatesAutoresizingMaskIntoConstraints = false
+            addSubview(spinner)
+            spinner.startAnimation(nil)
+            accessoryView = spinner
+
+            dynamicConstraints = [
+                nameLabel.trailingAnchor.constraint(lessThanOrEqualTo: spinner.leadingAnchor, constant: -8),
+                spinner.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -10),
+                spinner.centerYAnchor.constraint(equalTo: centerYAnchor),
+            ]
+        } else if isEnabled {
+            let statusLabel = NSTextField(labelWithString: "(connected)")
+            statusLabel.font = NSFont.menuFont(ofSize: 0)
+            statusLabel.textColor = NSColor.black.withAlphaComponent(0.6)
+            statusLabel.drawsBackground = false
+            statusLabel.isBordered = false
+            statusLabel.isEditable = false
+            statusLabel.translatesAutoresizingMaskIntoConstraints = false
+            addSubview(statusLabel)
+            accessoryView = statusLabel
+
+            dynamicConstraints = [
+                statusLabel.leadingAnchor.constraint(equalTo: nameLabel.trailingAnchor, constant: 6),
+                statusLabel.centerYAnchor.constraint(equalTo: centerYAnchor),
+                statusLabel.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -8),
+            ]
+        } else {
+            dynamicConstraints = [
+                nameLabel.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -8),
+            ]
+        }
+
+        NSLayoutConstraint.activate(dynamicConstraints)
+        needsDisplay = true
+        displayIfNeeded()
+    }
+
+    override var intrinsicContentSize: NSSize {
+        NSSize(width: NSView.noIntrinsicMetric, height: tunnelMenuItemHeight)
+    }
+
+    override var isOpaque: Bool {
+        showsEnabledBackground
+    }
+
+    override func draw(_ dirtyRect: NSRect) {
+        if showsEnabledBackground {
+            NSColor.systemGreen.setFill()
+            bounds.fill()
+        }
+        super.draw(dirtyRect)
+    }
+}
+
+/// Immediately refresh tunnel title/switch rows in an already-open menu.
+func syncOpenMenuTunnelAppearance(
+    in menu: NSMenu,
+    tunnelName: String,
+    connected: Bool,
+    pendingTarget: Bool?
+) {
+    let isPending = pendingTarget != nil
+    let titleEnabled = connected || pendingTarget == true
+    let enabledSwitchOn = pendingTarget ?? connected
+
+    for item in menu.items {
+        if let titleView = item.view as? TunnelTitleMenuItemView,
+           item.representedObject as? String == tunnelName {
+            titleView.applyAppearance(isEnabled: titleEnabled, isPending: isPending)
+        }
+        if let switchView = item.view as? TunnelSwitchMenuItemView,
+           switchView.menuSwitch.tunnelName == tunnelName {
+            switchView.menuSwitch.isEnabled = !isPending
+            if switchView.menuSwitch.controlKind == "enabled" {
+                switchView.menuSwitch.state = enabledSwitchOn ? .on : .off
+            }
+            switchView.applyOnBackground(isOn: switchView.menuSwitch.state == .on)
+        }
     }
 }
 
@@ -207,14 +261,7 @@ extension String {
 /// Target enabled state for tunnels with an in-flight wg-quick up/down.
 typealias PendingTunnelOperations = [String: Bool]
 
-func buildMenu(
-    tunnels: Tunnels,
-    menuItemWidth: CGFloat = 200,
-    pendingTunnels: PendingTunnelOperations = [:],
-    allTunnelDetails: Bool = false,
-    connectedTunnelDetails: Bool = true,
-    showInstallInstructions _: Bool = false
-) -> [NSMenuItem] {
+func buildMenu(tunnels: Tunnels, options: MenuBuildOptions = MenuBuildOptions()) -> [NSMenuItem] {
     guard !tunnels.isEmpty else {
         return [NSMenuItem(title: "No tunnel configurations found",
                            action: nil, keyEquivalent: "")]
@@ -222,24 +269,42 @@ func buildMenu(
 
     var items: [NSMenuItem] = []
     for tunnel in tunnels.sorted(by: { $0.name.lowercased() < $1.name.lowercased() }) {
-        let item = NSMenuItem(title: tunnel.name,
-                              action: #selector(AppDelegate.toggleTunnel(_:)), keyEquivalent: "")
-        item.target = NSApp.delegate
+        let item = NSMenuItem(title: tunnel.name, action: nil, keyEquivalent: "")
         items.append(item)
         item.representedObject = tunnel.name
-        if pendingTunnels[tunnel.name] != nil {
-            item.view = TunnelPendingMenuItemView(title: tunnel.name, menuWidth: menuItemWidth)
-            item.isEnabled = false
-        } else if tunnel.connected {
-            item.view = TunnelNameMenuItemView(title: tunnel.name, menuWidth: menuItemWidth)
-        }
+        // Keep name rows enabled so AppKit does not dim custom-view labels.
+        // Action is nil; connect/disconnect is only via the Enabled switch.
+        let pendingTarget = options.pendingTunnels[tunnel.name]
+        let isPending = pendingTarget != nil
+        // Green while connected, or while bringing up (Enabled on / pending true).
+        let titleEnabled = tunnel.connected || pendingTarget == true
+        item.view = TunnelTitleMenuItemView(
+            title: tunnel.name,
+            menuWidth: options.menuItemWidth,
+            isEnabled: titleEnabled,
+            isPending: isPending
+        )
+        item.isEnabled = true
 
-        if tunnel.connected && (connectedTunnelDetails || allTunnelDetails), let interface = tunnel.interface {
+        let profile = options.stealthProfiles[tunnel.name] ?? StealthProfile()
+        let switchesEnabled = options.pendingTunnels[tunnel.name] == nil
+            && options.switchTarget != nil
+            && options.switchAction != nil
+        items.append(contentsOf: stealthSwitchMenuItems(
+            tunnelName: tunnel.name,
+            connected: tunnel.connected,
+            profile: profile,
+            options: options,
+            switchesEnabled: switchesEnabled
+        ))
+
+        if tunnel.connected && (options.connectedTunnelDetails || options.allTunnelDetails),
+           let interface = tunnel.interface {
             items.append(TunnelDetailMenuItem(title: "Interface: \(interface)",
                                               action: nil, keyEquivalent: ""))
         }
 
-        if (tunnel.connected && connectedTunnelDetails) || allTunnelDetails {
+        if (tunnel.connected && options.connectedTunnelDetails) || options.allTunnelDetails {
             if let config = tunnel.config {
                 items.append(TunnelDetailMenuItem(title: "Address: \(config.address)",
                                                   action: nil, keyEquivalent: ""))
@@ -266,6 +331,39 @@ func buildMenu(
     }
 
     return items
+}
+
+private func stealthSwitchMenuItems(
+    tunnelName: String,
+    connected: Bool,
+    profile: StealthProfile,
+    options: MenuBuildOptions,
+    switchesEnabled: Bool
+) -> [NSMenuItem] {
+    let pendingTarget = options.pendingTunnels[tunnelName]
+    let enabledIsOn = pendingTarget ?? connected
+    let rows = [
+        StealthSwitchRow(title: "Enabled", controlKind: "enabled", isOn: enabledIsOn),
+        StealthSwitchRow(title: "Amnezia", controlKind: "amnezia", isOn: profile.amnezia.enabled),
+        StealthSwitchRow(title: "udp2raw", controlKind: "udp2raw", isOn: profile.udp2raw.enabled),
+        StealthSwitchRow(title: "wstunnel", controlKind: "wstunnel", isOn: profile.wstunnel.enabled),
+    ]
+    return rows.map { row in
+        let item = NSMenuItem(title: row.title, action: nil, keyEquivalent: "")
+        let view = TunnelSwitchMenuItemView(
+            title: row.title,
+            isOn: row.isOn,
+            tunnelName: tunnelName,
+            controlKind: row.controlKind,
+            menuWidth: options.menuItemWidth,
+            target: switchesEnabled ? options.switchTarget : nil,
+            action: switchesEnabled ? options.switchAction : nil
+        )
+        view.menuSwitch.isEnabled = switchesEnabled
+        item.view = view
+        item.isEnabled = switchesEnabled
+        return item
+    }
 }
 
 private let activeMenuBarGreen = NSColor.systemGreen

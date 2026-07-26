@@ -23,12 +23,25 @@ class EphemeralConfigTests: XCTestCase {
         XCTAssertFalse(out.contains("203.0.113.9:51820"))
     }
 
-    func testInjectsAmneziaKeys() throws {
+    func testPreservesAmneziaKeysFromConfig() throws {
+        let withAmnezia = """
+        [Interface]
+        PrivateKey = aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa=
+        Address = 10.0.0.2/32
+        Jc = 4
+        Jmin = 40
+
+        [Peer]
+        PublicKey = bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb=
+        Endpoint = 203.0.113.9:51820
+        AllowedIPs = 0.0.0.0/0
+        """
         var profile = StealthProfile()
         profile.amnezia.enabled = true
-        profile.amnezia.jc = 3
-        let out = try EphemeralConfig.rewrite(configText: base, profile: profile, localEndpoint: nil)
-        XCTAssertTrue(out.contains("Jc = 3"))
+        profile.amnezia.jc = 99
+        let out = try EphemeralConfig.rewrite(configText: withAmnezia, profile: profile, localEndpoint: nil)
+        XCTAssertTrue(out.contains("Jc = 4"))
+        XCTAssertFalse(out.contains("Jc = 99"))
         XCTAssertTrue(out.contains("Endpoint = 203.0.113.9:51820"))
     }
 }

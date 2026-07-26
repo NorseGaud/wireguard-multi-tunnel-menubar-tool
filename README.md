@@ -15,9 +15,9 @@ This is a macOS statusbar item (aka menubar icon) that wraps wg-quick. It allows
 
 - Sit in your menubar
 - Indicates if tunnels are enabled
-- Bring tunnel up/down via one click
+- Bring tunnel up/down via the **Enabled** switch in the menu
 - **Support for having multiple tunnels enabled at once (Official Wireguard app doesn't support this)**
-- **Per-tunnel stealth / obfuscation** — optional AmneziaWG, udp2raw, and wstunnel layers (see [Stealth / obfuscation](#stealth--obfuscation))
+- **Per-tunnel stealth / obfuscation** — AmneziaWG / udp2raw / wstunnel switches in the menu (see [Stealth / obfuscation](#stealth--obfuscation))
 - Exit tunnels on quit
 - ~~Fail miserably when brew/wg-quick is not installed or permissions on files are incorrect~~
 
@@ -36,7 +36,40 @@ If WireGuard tools live outside the default prefix ([since 1.16](https://github.
 
 ## Stealth / obfuscation
 
-Optional per-tunnel wrappers help traffic look less like WireGuard UDP on the wire. Configure them in **Preferences → Stealth**: pick a tunnel, enable one or more layers, and save. Profiles are stored by the app (not in your `.conf` files on disk).
+Optional per-tunnel wrappers help traffic look less like WireGuard UDP on the wire. Under each tunnel in the menubar menu you’ll see switches:
+
+- **Enabled** — connect / disconnect
+- **Amnezia** / **udp2raw** / **wstunnel** — toggle layers
+
+**Settings live next to your WireGuard conf**, not in Preferences:
+
+| Layer | Where settings come from |
+|-------|--------------------------|
+| Amnezia | `Jc` / `Jmin` / … keys in the tunnel `.conf` (use `awg-quick` when Amnezia is on) |
+| udp2raw / wstunnel | Companion JSON: same directory as the conf, named `<tunnel>.stealth.json` |
+
+Example companion file (`/opt/homebrew/etc/wireguard/home.stealth.json`):
+
+```json
+{
+  "schemaVersion": 1,
+  "amnezia": { "enabled": false },
+  "udp2raw": {
+    "enabled": false,
+    "remoteHost": "203.0.113.9",
+    "remotePort": 4096,
+    "password": "secret",
+    "rawMode": "faketcp"
+  },
+  "wstunnel": {
+    "enabled": true,
+    "serverURL": "wss://example.com/ws",
+    "tlsSkipVerify": false
+  }
+}
+```
+
+Menu switches flip the `enabled` flags in that file (via the privileged helper). Turning a layer on without required fields shows an error.
 
 **Stacking order** (when multiple layers are enabled):
 
@@ -46,7 +79,7 @@ Optional per-tunnel wrappers help traffic look less like WireGuard UDP on the wi
 | Bring-up (start) | wstunnel → udp2raw → WireGuard/Amnezia |
 | Tear-down (stop) | WireGuard/Amnezia → udp2raw → wstunnel |
 
-The helper resolves stealth binaries under `$(brewPrefix)/bin` (same prefix as `wg-quick`; default `/opt/homebrew`). Preferences shows **Installed** / **Missing** per tool.
+The helper resolves stealth binaries under `$(brewPrefix)/bin` (same prefix as `wg-quick`; default `/opt/homebrew`).
 
 ### Installing stealth tools
 

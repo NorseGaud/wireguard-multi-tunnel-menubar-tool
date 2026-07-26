@@ -79,10 +79,6 @@
 		A101000021CD90000001E742 /* StealthSettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E741 /* StealthSettingsStore.swift */; };
 		A101000021CD90000001E743 /* StealthSettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E741 /* StealthSettingsStore.swift */; };
 		A101000021CD90000001E752 /* StealthSettingsStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E751 /* StealthSettingsStoreTests.swift */; };
-		A101000021CD90000001E7C2 /* StealthPreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E7C1 /* StealthPreferencesView.swift */; };
-		A101000021CD90000001E7C3 /* StealthPreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E7C1 /* StealthPreferencesView.swift */; };
-		A101000021CD90000001E7D2 /* StealthPreferencesControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E7D1 /* StealthPreferencesControls.swift */; };
-		A101000021CD90000001E7D3 /* StealthPreferencesControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E7D1 /* StealthPreferencesControls.swift */; };
 		A101000021CD90000001E762 /* EphemeralConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E761 /* EphemeralConfig.swift */; };
 		A101000021CD90000001E763 /* EphemeralConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E761 /* EphemeralConfig.swift */; };
 		A101000021CD90000001E772 /* EphemeralConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E771 /* EphemeralConfigTests.swift */; };
@@ -96,6 +92,16 @@
 		A101000021CD90000001E7E2 /* Helper+Stealth.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E7E1 /* Helper+Stealth.swift */; };
 		A101000021CD90000001E7E3 /* Helper+Stealth.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E7E1 /* Helper+Stealth.swift */; };
 		A101000021CD90000001E7E4 /* Helper+Stealth.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E7E1 /* Helper+Stealth.swift */; };
+		A101000021CD90000001F102 /* StealthCompanion.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001F101 /* StealthCompanion.swift */; };
+		A101000021CD90000001F103 /* StealthCompanion.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001F101 /* StealthCompanion.swift */; };
+		A101000021CD90000001F104 /* StealthCompanion.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001F101 /* StealthCompanion.swift */; };
+		A101000021CD90000001F202 /* TunnelMenuSwitchViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001F201 /* TunnelMenuSwitchViews.swift */; };
+		A101000021CD90000001F402 /* MenuBuildOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001F401 /* MenuBuildOptions.swift */; };
+		A101000021CD90000001F403 /* MenuBuildOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001F401 /* MenuBuildOptions.swift */; };
+		A101000021CD90000001F412 /* AppDelegate+StealthMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001F411 /* AppDelegate+StealthMenu.swift */; };
+		A101000021CD90000001F413 /* AppDelegate+StealthMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001F411 /* AppDelegate+StealthMenu.swift */; };
+		A101000021CD90000001F203 /* TunnelMenuSwitchViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001F201 /* TunnelMenuSwitchViews.swift */; };
+		A101000021CD90000001F302 /* StealthCompanionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001F301 /* StealthCompanionTests.swift */; };
 		A101000021CD90000001E7F2 /* StealthClientArgvTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E7F1 /* StealthClientArgvTests.swift */; };
 /* End PBXBuildFile section */
 
@@ -191,8 +197,6 @@
 		A101000021CD90000001E731 /* StealthArgSecurityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StealthArgSecurityTests.swift; sourceTree = "<group>"; };
 		A101000021CD90000001E741 /* StealthSettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StealthSettingsStore.swift; sourceTree = "<group>"; };
 		A101000021CD90000001E751 /* StealthSettingsStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StealthSettingsStoreTests.swift; sourceTree = "<group>"; };
-		A101000021CD90000001E7C1 /* StealthPreferencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StealthPreferencesView.swift; sourceTree = "<group>"; };
-		A101000021CD90000001E7D1 /* StealthPreferencesControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StealthPreferencesControls.swift; sourceTree = "<group>"; };
 		A101000021CD90000001E761 /* EphemeralConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EphemeralConfig.swift; sourceTree = "<group>"; };
 		A101000021CD90000001E771 /* EphemeralConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EphemeralConfigTests.swift; sourceTree = "<group>"; };
 		A101000021CD90000001E781 /* StealthProcessRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StealthProcessRunner.swift; sourceTree = "<group>"; };
@@ -200,6 +204,11 @@
 		A101000021CD90000001E7B1 /* StealthSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StealthSupport.swift; sourceTree = "<group>"; };
 		A101000021CD90000001E7A1 /* StealthOrchestratorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StealthOrchestratorTests.swift; sourceTree = "<group>"; };
 		A101000021CD90000001E7E1 /* Helper+Stealth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Helper+Stealth.swift"; sourceTree = "<group>"; };
+		A101000021CD90000001F101 /* StealthCompanion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StealthCompanion.swift; sourceTree = "<group>"; };
+		A101000021CD90000001F201 /* TunnelMenuSwitchViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TunnelMenuSwitchViews.swift; sourceTree = "<group>"; };
+		A101000021CD90000001F401 /* MenuBuildOptions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBuildOptions.swift; sourceTree = "<group>"; };
+		A101000021CD90000001F411 /* AppDelegate+StealthMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+StealthMenu.swift"; sourceTree = "<group>"; };
+		A101000021CD90000001F301 /* StealthCompanionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StealthCompanionTests.swift; sourceTree = "<group>"; };
 		A101000021CD90000001E7F1 /* StealthClientArgvTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StealthClientArgvTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -244,6 +253,7 @@
 				0444B861211F5CD700CA6ECA /* main.swift */,
 				04B92494211F6A68008D964A /* Helper.swift */,
 				A101000021CD90000001E7E1 /* Helper+Stealth.swift */,
+				A101000021CD90000001F101 /* StealthCompanion.swift */,
 				A101000021CD90000001E761 /* EphemeralConfig.swift */,
 				A101000021CD90000001E781 /* StealthProcessRunner.swift */,
 				A101000021CD90000001E791 /* StealthOrchestrator.swift */,
@@ -279,6 +289,7 @@
 				A101000021CD90000001E731 /* StealthArgSecurityTests.swift */,
 				A101000021CD90000001E751 /* StealthSettingsStoreTests.swift */,
 				A101000021CD90000001E771 /* EphemeralConfigTests.swift */,
+				A101000021CD90000001F301 /* StealthCompanionTests.swift */,
 				A101000021CD90000001E7A1 /* StealthOrchestratorTests.swift */,
 				A101000021CD90000001E7F1 /* StealthClientArgvTests.swift */,
 				04B2BD4521BDA69000CCAE2F /* Info.plist */,
@@ -319,9 +330,10 @@
 				04B4BE47211E1E030001213A /* MainMenu.xib */,
 				0401E2AB21CD853B0030E707 /* Menu.swift */,
 				0457E2FA21DFF1F600DD17A2 /* PreferencesController.swift */,
+				A101000021CD90000001F201 /* TunnelMenuSwitchViews.swift */,
+				A101000021CD90000001F401 /* MenuBuildOptions.swift */,
+				A101000021CD90000001F411 /* AppDelegate+StealthMenu.swift */,
 				0457E2FB21DFF1F600DD17A2 /* PreferencesController.xib */,
-				A101000021CD90000001E7D1 /* StealthPreferencesControls.swift */,
-				A101000021CD90000001E7C1 /* StealthPreferencesView.swift */,
 				A101000021CD90000001E741 /* StealthSettingsStore.swift */,
 				0401E29821C9913B0030E707 /* Tunnel.swift */,
 			);
@@ -556,6 +568,7 @@
 				0401E29521C856DC0030E707 /* AppProtocol.swift in Sources */,
 				04B92495211F6A68008D964A /* Helper.swift in Sources */,
 				A101000021CD90000001E7E2 /* Helper+Stealth.swift in Sources */,
+				A101000021CD90000001F102 /* StealthCompanion.swift in Sources */,
 				0401E2A821CD811B0030E707 /* Types.swift in Sources */,
 				0401E2A621CCFFB10030E707 /* AppXPC.swift in Sources */,
 				0456DA6721BB0C9C00701CCE /* Const.swift in Sources */,
@@ -580,6 +593,7 @@
 				0401E2BB21CD97AC0030E707 /* AppProtocol.swift in Sources */,
 				0401E2B521CD973F0030E707 /* Helper.swift in Sources */,
 				A101000021CD90000001E7E3 /* Helper+Stealth.swift in Sources */,
+				A101000021CD90000001F103 /* StealthCompanion.swift in Sources */,
 				0401E2B621CD97670030E707 /* SKQueue.swift in Sources */,
 				047AE5D921DE7D390099ABF6 /* HelperTests.swift in Sources */,
 				0401E2B921CD97770030E707 /* HelperProtocol.swift in Sources */,
@@ -607,6 +621,7 @@
 				A101000021CD90000001E752 /* StealthSettingsStoreTests.swift in Sources */,
 				A101000021CD90000001E743 /* StealthSettingsStore.swift in Sources */,
 				A101000021CD90000001E772 /* EphemeralConfigTests.swift in Sources */,
+				A101000021CD90000001F302 /* StealthCompanionTests.swift in Sources */,
 				A101000021CD90000001E763 /* EphemeralConfig.swift in Sources */,
 				A101000021CD90000001E783 /* StealthProcessRunner.swift in Sources */,
 				A101000021CD90000001E793 /* StealthOrchestrator.swift in Sources */,
@@ -614,6 +629,7 @@
 				A101000021CD90000001E7A2 /* StealthOrchestratorTests.swift in Sources */,
 				A101000021CD90000001E7F2 /* StealthClientArgvTests.swift in Sources */,
 				A101000021CD90000001E7E4 /* Helper+Stealth.swift in Sources */,
+				A101000021CD90000001F104 /* StealthCompanion.swift in Sources */,
 				0401E2AD21CD855F0030E707 /* Menu.swift in Sources */,
 				0401E29F21C993EF0030E707 /* AppProtocol.swift in Sources */,
 				0466E5B921C1AB5700113B45 /* Const.swift in Sources */,
@@ -624,8 +640,9 @@
 				0401E2B321CD93370030E707 /* AppXPC.swift in Sources */,
 				0401E29B21C992C80030E707 /* Tunnel.swift in Sources */,
 				0457E2FE21DFF2D400DD17A2 /* PreferencesController.swift in Sources */,
-				A101000021CD90000001E7D3 /* StealthPreferencesControls.swift in Sources */,
-				A101000021CD90000001E7C3 /* StealthPreferencesView.swift in Sources */,
+				A101000021CD90000001F203 /* TunnelMenuSwitchViews.swift in Sources */,
+				A101000021CD90000001F403 /* MenuBuildOptions.swift in Sources */,
+				A101000021CD90000001F413 /* AppDelegate+StealthMenu.swift in Sources */,
 				0401E29D21C992EE0030E707 /* HelperXPC.swift in Sources */,
 				0401E2B221CD93340030E707 /* WireGuard.swift in Sources */,
 				0401E2B121CD92A80030E707 /* Helper.swift in Sources */,
@@ -646,8 +663,9 @@
 				A101000021CD90000001E712 /* StealthArgSecurity.swift in Sources */,
 				0401E29921C9913B0030E707 /* Tunnel.swift in Sources */,
 				0457E2FC21DFF1F600DD17A2 /* PreferencesController.swift in Sources */,
-				A101000021CD90000001E7D2 /* StealthPreferencesControls.swift in Sources */,
-				A101000021CD90000001E7C2 /* StealthPreferencesView.swift in Sources */,
+				A101000021CD90000001F202 /* TunnelMenuSwitchViews.swift in Sources */,
+				A101000021CD90000001F402 /* MenuBuildOptions.swift in Sources */,
+				A101000021CD90000001F412 /* AppDelegate+StealthMenu.swift in Sources */,
 				A101000021CD90000001E742 /* StealthSettingsStore.swift in Sources */,
 				0401E2AC21CD853B0030E707 /* Menu.swift in Sources */,
 				0401E29721C990FB0030E707 /* HelperXPC.swift in Sources */,

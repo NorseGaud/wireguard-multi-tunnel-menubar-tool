@@ -186,6 +186,40 @@ class Helper: NSObject, HelperProtocol, SKQueueDelegate {
         appUpdateState()
     }
 
+    func getStealthProfiles(_ reply: @escaping (String) -> Void) {
+        var profiles: [String: StealthProfile] = [:]
+        for tunnelName in wireguard.tunnelNames() {
+            guard let configPath = wireguard.configFilePath(for: tunnelName) else { continue }
+            profiles[tunnelName] = StealthCompanion.load(tunnelName: tunnelName, configFilePath: configPath)
+        }
+        if let data = try? JSONEncoder().encode(profiles),
+           let json = String(data: data, encoding: .utf8) {
+            reply(json)
+        } else {
+            reply("{}")
+        }
+    }
+
+    func setStealthProfile(tunnelName: String, stealthProfileJSON: String,
+                           reply: @escaping (_ success: Bool, _ errorMessage: String) -> Void) {
+        guard WireGuard.validateTunnelName(tunnelName: tunnelName) else {
+            reply(false, "Invalid tunnel name '\(tunnelName)'")
+            return
+        }
+        guard let configPath = wireguard.configFilePath(for: tunnelName) else {
+            reply(false, "Could not find configuration file for tunnel '\(tunnelName)'")
+            return
+        }
+        do {
+            let profile = try StealthProfile.parse(jsonString: stealthProfileJSON)
+            try profile.validate()
+            try StealthCompanion.save(profile: profile, tunnelName: tunnelName, configFilePath: configPath)
+            reply(true, "")
+        } catch {
+            reply(false, "Failed to save stealth profile: \(error)")
+        }
+    }
+
     func stealthToolsStatus(_ reply: @escaping (String) -> Void) {
         let status = currentStealthToolsStatus()
         guard let data = try? JSONEncoder().encode(status),

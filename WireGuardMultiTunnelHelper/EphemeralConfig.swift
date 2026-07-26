@@ -5,28 +5,10 @@ enum EphemeralConfigError: Error, Equatable {
 }
 
 enum EphemeralConfig {
-    private static let amneziaKeys: Set<String> = [
-        "Jc", "Jmin", "Jmax", "S1", "S2", "H1", "H2", "H3", "H4",
-    ]
-
     static func rewrite(configText: String, profile: StealthProfile, localEndpoint: String?) throws -> String {
         var rewriter = Rewriter(profile: profile, localEndpoint: localEndpoint)
         try rewriter.process(configText: configText)
         return rewriter.result
-    }
-
-    private static func amneziaLines(from settings: AmneziaSettings) -> [String] {
-        [
-            "Jc = \(settings.jc)",
-            "Jmin = \(settings.jmin)",
-            "Jmax = \(settings.jmax)",
-            "S1 = \(settings.s1)",
-            "S2 = \(settings.s2)",
-            "H1 = \(settings.h1)",
-            "H2 = \(settings.h2)",
-            "H3 = \(settings.h3)",
-            "H4 = \(settings.h4)",
-        ]
     }
 
     private static func iniKey(from trimmedLine: String) -> String? {
@@ -87,8 +69,8 @@ enum EphemeralConfig {
         }
 
         mutating func flushAmneziaIfNeeded() {
+            // Amnezia params come from the on-disk `.conf` (design C). Do not inject/replace from profile.
             guard section == "Interface", profile.amnezia.enabled, !injectedAmnezia else { return }
-            output.append(contentsOf: EphemeralConfig.amneziaLines(from: profile.amnezia))
             injectedAmnezia = true
         }
 
@@ -98,11 +80,9 @@ enum EphemeralConfig {
             rewrittenEndpoint = true
         }
 
-        func shouldDropAmneziaKey(_ trimmed: String) -> Bool {
-            guard section == "Interface", profile.amnezia.enabled,
-                  let key = EphemeralConfig.iniKey(from: trimmed)
-            else { return false }
-            return amneziaKeys.contains(key)
+        func shouldDropAmneziaKey(_: String) -> Bool {
+            // Keep Jc/Jmin/… already present in the user's WireGuard/Amnezia conf.
+            false
         }
 
         mutating func rewriteEndpointIfNeeded(_ trimmed: String) -> Bool {

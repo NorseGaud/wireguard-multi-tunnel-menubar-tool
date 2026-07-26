@@ -29,7 +29,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSUserNotifi
     let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
     @IBOutlet var menu: NSMenu!
 
-    let stealthStore = StealthSettingsStore(directoryURL: StealthSettingsStore.defaultDirectoryURL)
+    /// Companion-file stealth profiles keyed by tunnel name (from helper).
+    var stealthProfiles: [String: StealthProfile] = [:]
 
     var privilegedHelper: HelperXPC?
 
@@ -56,7 +57,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSUserNotifi
 
         // configure menu to use and set delegate to allow overriding menu option modifier behaviour
         statusItem.menu = menu
-        menu.minimumWidth = 200
+        menu.minimumWidth = 260
 
         // initialize helper XPC connection
         privilegedHelper = HelperXPC(exportedObject: self)
@@ -101,11 +102,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSUserNotifi
         let menuWidth = tunnelMenuRowWidth(in: menu)
 
         // generate new tunnel and tunnel details menu items and add them to the menu
-        let tunnelMenuItems = buildMenu(tunnels: tunnels,
-                                        menuItemWidth: menuWidth,
-                                        pendingTunnels: pendingTunnelOperations,
-                                        allTunnelDetails: showDetails,
-                                        connectedTunnelDetails: showConnected)
+        var menuOptions = MenuBuildOptions()
+        menuOptions.menuItemWidth = menuWidth
+        menuOptions.pendingTunnels = pendingTunnelOperations
+        menuOptions.stealthProfiles = stealthProfiles
+        menuOptions.switchTarget = self
+        menuOptions.switchAction = #selector(tunnelMenuSwitchChanged(_:))
+        menuOptions.allTunnelDetails = showDetails
+        menuOptions.connectedTunnelDetails = showConnected
+        let tunnelMenuItems = buildMenu(tunnels: tunnels, options: menuOptions)
         for item in tunnelMenuItems.reversed() {
             item.tag = MenuItemTypes.tunnel.rawValue
             menu.insertItem(item, at: 0)
@@ -140,13 +145,27 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSUserNotifi
             self.tunnels = tunnelInfo.map { name, interfaceAndConfigData in
                 Tunnel(name: name, fromTunnelInfo: interfaceAndConfigData)
             }
-            DispatchQueue.main.async { self.applyTunnelStateUpdate() }
+            xpcService?.getStealthProfiles { json in
+                self.stealthProfiles = Self.parseStealthProfilesJSON(json)
+                DispatchQueue.main.async { self.applyTunnelStateUpdate() }
+            }
         })
+    }
+
+    private static func parseStealthProfilesJSON(_ json: String) -> [String: StealthProfile] {
+        guard let data = json.data(using: .utf8),
+              let profiles = try? JSONDecoder().decode([String: StealthProfile].self, from: data)
+        else {
+            return [:]
+        }
+        return profiles
     }
 
     func applyTunnelStateUpdate() {
         resolvePendingTunnelOperations(&pendingTunnelOperations, tunnels: tunnels)
         refreshStatusBarAppearance()
+        // Prefer in-place sync while the menu may still be open.
+        syncOpenMenuForAllTunnels()
         menu.update()
     }
 
@@ -183,43 +202,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSUserNotifi
         statusBarSpinner?.stopAnimation(nil)
         statusBarSpinner?.removeFromSuperview()
         statusBarSpinner = nil
-    }
-
-    /// bring tunnel up/down
-    @objc func toggleTunnel(_ sender: NSMenuItem) {
-        if let tunnelName = sender.representedObject as? String {
-            let tunnel = tunnels.filter { $0.name == tunnelName }[0]
-            let enabling = !tunnel.connected
-
-            pendingTunnelOperations[tunnelName] = enabling
-            refreshStatusBarAppearance()
-            menu.update()
-
-            let xpcService = privilegedHelper?.helperConnection()?.remoteObjectProxyWithErrorHandler { error in
-                NSLog("XPCService error: \(error)")
-            } as? HelperProtocol
-
-            let profile = stealthStore.profile(for: tunnelName)
-            let json = (try? profile.jsonString()) ?? ""
-            xpcService?.setTunnel(
-                tunnelName: tunnelName,
-                enable: enabling,
-                stealthProfileJSON: json,
-                reply: { success, errorMessage in
-                    NSLog("setTunnel \(tunnelName), to: \(enabling), success: \(success), error: \(errorMessage)")
-                    DispatchQueue.main.async {
-                        if !success {
-                            self.pendingTunnelOperations.removeValue(forKey: tunnelName)
-                            self.refreshStatusBarAppearance()
-                            self.menu.update()
-                            self.notifyError(errorMessage)
-                        }
-                    }
-                }
-            )
-        } else {
-            NSLog("Sender not convertable to String: \(sender.representedObject.debugDescription)")
-        }
     }
 
     /// Use notificationcenter banner to inform user of failed tunnel command

@@ -41,6 +41,7 @@ Communication uses simple, typed primitives (no arbitrary shell commands from th
 | `setTunnel(tunnelName:enable:stealthProfileJSON:)` | Same, with an optional JSON-encoded stealth profile (Amnezia / udp2raw / wstunnel layers) |
 | `getVersion` | Helper bundle version (for update detection) |
 | `wireguardInstalled` | Whether validated `wg` and `wg-quick` binaries exist |
+| `getStealthProfiles` / `setStealthProfile` | Load/save companion `<tunnel>.stealth.json` |
 | `stealthToolsStatus` | JSON map of which stealth binaries exist under `brewPrefix/bin` |
 
 **Helper → app** (`AppProtocol`):
@@ -111,7 +112,7 @@ Tunnel configuration files on disk contain private keys. Before config text is s
 
 When a tunnel is brought up with stealth layers enabled, the helper:
 
-- Accepts a **JSON stealth profile** over XPC (`setTunnel(..., stealthProfileJSON:)`). The app stores profiles per tunnel; they are not written into the user's on-disk `.conf` files.
+- Accepts a **JSON stealth profile** over XPC (`setTunnel(..., stealthProfileJSON:)`). Layer settings and enable flags live in companion `<tunnel>.stealth.json` beside the WireGuard conf (read/written by the helper). Amnezia protocol params stay in the `.conf`.
 - Writes **ephemeral configs** under `/var/run/wireguard-multitunnel/stealth/` (`stealthRunPath`). These are rewritten copies (local endpoint injection, optional Amnezia keys) used only for the current session and removed on tear-down.
 - Starts wrapper processes with **argv only** — no shell invocation. Free-form per-layer `extraArgs` are rejected in v1 (`StealthValidationError.extraArgsNotSupported`).
 - **Does not log** udp2raw passwords, Amnezia secrets, or full stealth profile payloads. Logs are limited to layer names, ports, PIDs, and exit codes.
