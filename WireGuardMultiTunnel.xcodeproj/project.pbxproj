@@ -86,6 +86,8 @@
 		A101000021CD90000001E783 /* StealthProcessRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E781 /* StealthProcessRunner.swift */; };
 		A101000021CD90000001E792 /* StealthOrchestrator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E791 /* StealthOrchestrator.swift */; };
 		A101000021CD90000001E793 /* StealthOrchestrator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E791 /* StealthOrchestrator.swift */; };
+		A101000021CD90000001E7B2 /* StealthSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E7B1 /* StealthSupport.swift */; };
+		A101000021CD90000001E7B3 /* StealthSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E7B1 /* StealthSupport.swift */; };
 		A101000021CD90000001E7A2 /* StealthOrchestratorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E7A1 /* StealthOrchestratorTests.swift */; };
 /* End PBXBuildFile section */
 
@@ -185,6 +187,7 @@
 		A101000021CD90000001E771 /* EphemeralConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EphemeralConfigTests.swift; sourceTree = "<group>"; };
 		A101000021CD90000001E781 /* StealthProcessRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StealthProcessRunner.swift; sourceTree = "<group>"; };
 		A101000021CD90000001E791 /* StealthOrchestrator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StealthOrchestrator.swift; sourceTree = "<group>"; };
+		A101000021CD90000001E7B1 /* StealthSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StealthSupport.swift; sourceTree = "<group>"; };
 		A101000021CD90000001E7A1 /* StealthOrchestratorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StealthOrchestratorTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -231,6 +234,7 @@
 				A101000021CD90000001E761 /* EphemeralConfig.swift */,
 				A101000021CD90000001E781 /* StealthProcessRunner.swift */,
 				A101000021CD90000001E791 /* StealthOrchestrator.swift */,
+				A101000021CD90000001E7B1 /* StealthSupport.swift */,
 				04B9249B211F7200008D964A /* Launchd.plist */,
 				04B9249C211F7215008D964A /* Info.plist */,
 				0428EA0C21BB066E00178BA0 /* WireGuard.swift */,
@@ -544,6 +548,7 @@
 				A101000021CD90000001E762 /* EphemeralConfig.swift in Sources */,
 				A101000021CD90000001E782 /* StealthProcessRunner.swift in Sources */,
 				A101000021CD90000001E792 /* StealthOrchestrator.swift in Sources */,
+				A101000021CD90000001E7B2 /* StealthSupport.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -587,6 +592,7 @@
 				A101000021CD90000001E763 /* EphemeralConfig.swift in Sources */,
 				A101000021CD90000001E783 /* StealthProcessRunner.swift in Sources */,
 				A101000021CD90000001E793 /* StealthOrchestrator.swift in Sources */,
+				A101000021CD90000001E7B3 /* StealthSupport.swift in Sources */,
 				A101000021CD90000001E7A2 /* StealthOrchestratorTests.swift in Sources */,
 				0401E2AD21CD855F0030E707 /* Menu.swift in Sources */,
 				0401E29F21C993EF0030E707 /* AppProtocol.swift in Sources */,

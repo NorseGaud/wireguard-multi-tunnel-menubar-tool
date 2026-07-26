@@ -3,6 +3,7 @@ import Foundation
 protocol StealthProcessRunning {
     func start(executable: String, arguments: [String]) throws -> Int32
     func stop(pid: Int32)
+    func isAlive(pid: Int32) -> Bool
 }
 
 struct StealthToolPaths {
@@ -27,5 +28,9 @@ enum RealStealthProcessRunner: StealthProcessRunning {
 
     func stop(pid: Int32) {
         kill(pid, SIGTERM)
+    }
+
+    func isAlive(pid: Int32) -> Bool {
+        kill(pid, 0) == 0
     }
 }

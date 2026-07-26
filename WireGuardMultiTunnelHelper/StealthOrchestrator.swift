@@ -6,6 +6,10 @@ import Foundation
 /// Start order: wstunnel → udp2raw → wg
 /// Stop order: wg → udp2raw → wstunnel
 ///
+/// After each wrapper start, polls process liveness (`kill(pid, 0)`) and local UDP
+/// port readiness (bind probe: EADDRINUSE ⇒ in use) for up to `readinessTimeout`.
+/// Immediately before `runWgQuick`, re-checks that wrapper pids are still alive.
+///
 /// Argv shapes (binaries not installed locally at impl time; verify against
 /// `wstunnel --help` / `udp2raw --help` when available):
 /// - wstunnel client: `client -L udp://127.0.0.1:<local>:<exitHost>:<exitPort> <serverURL>`
@@ -23,20 +27,29 @@ final class StealthOrchestrator {
 
     private let runner: StealthProcessRunning
     private let toolPaths: StealthToolPaths
-    private let runDirectory: String
+    private let store: StealthRuntimeStore
     /// Reserved for future Homebrew path resolution (toolPaths are injected today).
     let brewPrefix: String
+    private let readinessTimeout: TimeInterval
+    private let pollInterval: TimeInterval
+    private let isPortReady: (UInt16) -> Bool
 
     init(
         runner: StealthProcessRunning,
         toolPaths: StealthToolPaths,
         runDirectory: String,
-        brewPrefix: String
+        brewPrefix: String,
+        readinessTimeout: TimeInterval = 2.0,
+        pollInterval: TimeInterval = 0.05,
+        isPortReady: ((UInt16) -> Bool)? = nil
     ) {
         self.runner = runner
         self.toolPaths = toolPaths
-        self.runDirectory = runDirectory
+        store = StealthRuntimeStore(runDirectory: runDirectory)
         self.brewPrefix = brewPrefix
+        self.readinessTimeout = readinessTimeout
+        self.pollInterval = pollInterval
+        self.isPortReady = isPortReady ?? StealthLocalUdp.isPortInUse
     }
 
     func bringUp(
@@ -44,7 +57,8 @@ final class StealthOrchestrator {
         sourceConfigPath: String,
         profile: StealthProfile,
         useAmnezia: Bool,
-        runWgQuick: (String) -> (Bool, String)
+        runWgQuick: (String) -> (Bool, String),
+        runWgQuickDown: (() -> (Bool, String))? = nil
     ) -> (Bool, String) {
         do {
             try profile.validate()
@@ -67,24 +81,29 @@ final class StealthOrchestrator {
         )
 
         do {
-            try ensureRunDirectory()
+            try store.ensureRunDirectory()
+            cleanupStaleStateIfNeeded(tunnelName: tunnelName)
+
             let localEndpoint = try startWrappersIfNeeded(
                 profile: profile,
                 configText: configText,
                 state: &state,
                 startedPids: &startedPids
             )
+            try assertWrappersAlive(state: state)
+
             let rewritten = try EphemeralConfig.rewrite(
                 configText: configText,
                 profile: profile,
                 localEndpoint: localEndpoint
             )
-            let ephemeralPath = ephemeralConfigPath(aliasName: state.aliasName)
+            let ephemeralPath = store.ephemeralConfigPath(aliasName: state.aliasName)
             try rewritten.write(toFile: ephemeralPath, atomically: true, encoding: .utf8)
-            try persistState(state)
+            try store.persist(state)
 
             let (succeeded, message) = runWgQuick(ephemeralPath)
             if !succeeded {
+                _ = runWgQuickDown?()
                 rollback(startedPids: startedPids.reversed(), state: state)
                 return (false, message)
             }
@@ -99,7 +118,7 @@ final class StealthOrchestrator {
         tunnelName: String,
         runWgQuickDown: () -> (Bool, String)
     ) -> (Bool, String) {
-        let state = loadState(tunnelName: tunnelName)
+        let state = store.load(tunnelName: tunnelName)
         let (succeeded, message) = runWgQuickDown()
 
         if let udp2rawPid = state?.udp2rawPid {
@@ -110,8 +129,19 @@ final class StealthOrchestrator {
         }
 
         let aliasName = state?.aliasName ?? WireGuard.wgQuickInterfaceName(for: tunnelName)
-        deleteRuntimeFiles(tunnelName: tunnelName, aliasName: aliasName)
+        store.deleteRuntimeFiles(tunnelName: tunnelName, aliasName: aliasName)
         return (succeeded, message)
+    }
+
+    private func cleanupStaleStateIfNeeded(tunnelName: String) {
+        guard let stale = store.load(tunnelName: tunnelName) else { return }
+        if let udp2rawPid = stale.udp2rawPid {
+            runner.stop(pid: udp2rawPid)
+        }
+        if let wstunnelPid = stale.wstunnelPid {
+            runner.stop(pid: wstunnelPid)
+        }
+        store.deleteRuntimeFiles(tunnelName: stale.tunnelName, aliasName: stale.aliasName)
     }
 
     private func startWrappersIfNeeded(
@@ -143,7 +173,7 @@ final class StealthOrchestrator {
         state: inout TunnelState,
         startedPids: inout [Int32]
     ) throws {
-        let wstunnelPort = try allocatePort()
+        let wstunnelPort = try StealthLocalUdp.allocatePort()
         state.wstunnelLocalPort = wstunnelPort
         let exitHost = profile.udp2raw.enabled ? profile.udp2raw.remoteHost : endpoint.host
         let exitPort = profile.udp2raw.enabled ? profile.udp2raw.remotePort : endpoint.port
@@ -159,6 +189,7 @@ final class StealthOrchestrator {
         let pid = try runner.start(executable: executable, arguments: args)
         startedPids.append(pid)
         state.wstunnelPid = pid
+        try waitForListenerReady(pid: pid, port: wstunnelPort)
     }
 
     private func startUdp2raw(
@@ -166,12 +197,11 @@ final class StealthOrchestrator {
         state: inout TunnelState,
         startedPids: inout [Int32]
     ) throws {
-        let udp2rawPort = try allocatePort()
+        let udp2rawPort = try StealthLocalUdp.allocatePort()
         state.udp2rawLocalPort = udp2rawPort
         let remoteHost: String
         let remotePort: UInt16
         if profile.wstunnel.enabled, let wstunnelPort = state.wstunnelLocalPort {
-            // Next hop is local wstunnel (WG → udp2raw → wstunnel).
             remoteHost = "127.0.0.1"
             remotePort = wstunnelPort
         } else {
@@ -190,6 +220,35 @@ final class StealthOrchestrator {
         let pid = try runner.start(executable: executable, arguments: args)
         startedPids.append(pid)
         state.udp2rawPid = pid
+        try waitForListenerReady(pid: pid, port: udp2rawPort)
+    }
+
+    private func waitForListenerReady(pid: Int32, port: UInt16) throws {
+        let deadline = Date().addingTimeInterval(readinessTimeout)
+        while Date() < deadline {
+            guard runner.isAlive(pid: pid) else {
+                throw StealthOrchestratorError.wrapperExited
+            }
+            if isPortReady(port) {
+                return
+            }
+            Thread.sleep(forTimeInterval: pollInterval)
+        }
+        guard runner.isAlive(pid: pid) else {
+            throw StealthOrchestratorError.wrapperExited
+        }
+        guard isPortReady(port) else {
+            throw StealthOrchestratorError.wrapperNotReady
+        }
+    }
+
+    private func assertWrappersAlive(state: TunnelState) throws {
+        if let pid = state.wstunnelPid, !runner.isAlive(pid: pid) {
+            throw StealthOrchestratorError.wrapperExited
+        }
+        if let pid = state.udp2rawPid, !runner.isAlive(pid: pid) {
+            throw StealthOrchestratorError.wrapperExited
+        }
     }
 
     private func missingToolMessage(profile: StealthProfile, useAmnezia: Bool) -> String? {
@@ -197,7 +256,6 @@ final class StealthOrchestrator {
         if needsAmnezia, toolPaths.awgQuick == nil {
             return "awg-quick not installed"
         }
-        // amneziaGo must exist alongside awg-quick for Amnezia bring-up (documented for callers).
         if needsAmnezia, toolPaths.amneziaGo == nil {
             return "amneziawg-go not installed"
         }
@@ -210,156 +268,10 @@ final class StealthOrchestrator {
         return nil
     }
 
-    func allocatePort() throws -> UInt16 {
-        let candidates = Array(1024 ... 65535).shuffled()
-        for port in candidates {
-            let socketFd = socket(AF_INET, SOCK_DGRAM, 0)
-            guard socketFd >= 0 else { continue }
-            defer { close(socketFd) }
-
-            var addr = sockaddr_in()
-            addr.sin_len = UInt8(MemoryLayout<sockaddr_in>.size)
-            addr.sin_family = sa_family_t(AF_INET)
-            addr.sin_port = in_port_t(UInt16(port).bigEndian)
-            addr.sin_addr = in_addr(s_addr: inet_addr("127.0.0.1"))
-
-            let bindResult = withUnsafePointer(to: &addr) {
-                $0.withMemoryRebound(to: sockaddr.self, capacity: 1) {
-                    bind(socketFd, $0, socklen_t(MemoryLayout<sockaddr_in>.size))
-                }
-            }
-            if bindResult == 0 {
-                return UInt16(port)
-            }
-        }
-        throw StealthOrchestratorError.portAllocationFailed
-    }
-
-    private func ensureRunDirectory() throws {
-        try FileManager.default.createDirectory(
-            atPath: runDirectory,
-            withIntermediateDirectories: true,
-            attributes: [.posixPermissions: 0o700]
-        )
-    }
-
-    private func statePath(tunnelName: String) -> String {
-        "\(runDirectory)/\(tunnelName).json"
-    }
-
-    private func ephemeralConfigPath(aliasName: String) -> String {
-        "\(runDirectory)/\(aliasName).conf"
-    }
-
-    private func persistState(_ state: TunnelState) throws {
-        let data = try JSONEncoder().encode(state)
-        try data.write(to: URL(fileURLWithPath: statePath(tunnelName: state.tunnelName)), options: .atomic)
-    }
-
-    private func loadState(tunnelName: String) -> TunnelState? {
-        let url = URL(fileURLWithPath: statePath(tunnelName: tunnelName))
-        guard let data = try? Data(contentsOf: url) else { return nil }
-        return try? JSONDecoder().decode(TunnelState.self, from: data)
-    }
-
-    private func deleteRuntimeFiles(tunnelName: String, aliasName: String) {
-        try? FileManager.default.removeItem(atPath: statePath(tunnelName: tunnelName))
-        try? FileManager.default.removeItem(atPath: ephemeralConfigPath(aliasName: aliasName))
-    }
-
     private func rollback(startedPids: [Int32], state: TunnelState) {
         for pid in startedPids {
             runner.stop(pid: pid)
         }
-        deleteRuntimeFiles(tunnelName: state.tunnelName, aliasName: state.aliasName)
-    }
-}
-
-enum StealthClientArgv {
-    /// Documented reasonable client argv (erebe/wstunnel-style). Not verified against a local binary.
-    static func wstunnel(
-        localPort: UInt16,
-        exitHost: String,
-        exitPort: UInt16,
-        profile: WsTunnelSettings
-    ) -> [String] {
-        var args = [
-            "client",
-            "-L",
-            "udp://127.0.0.1:\(localPort):\(exitHost):\(exitPort)",
-        ]
-        if profile.tlsSkipVerify {
-            args.append("--tls-skip-verify")
-        }
-        args.append(contentsOf: profile.extraArgs)
-        args.append(profile.serverURL)
-        return args
-    }
-
-    /// Documented reasonable client argv (udp2raw-tunnel-style). Not verified against a local binary.
-    static func udp2raw(
-        localPort: UInt16,
-        remoteHost: String,
-        remotePort: UInt16,
-        profile: Udp2RawSettings
-    ) -> [String] {
-        var args = [
-            "-c",
-            "-l", "127.0.0.1:\(localPort)",
-            "-r", "\(remoteHost):\(remotePort)",
-            "-k", profile.password,
-            "--raw-mode", profile.rawMode.rawValue,
-        ]
-        args.append(contentsOf: profile.extraArgs)
-        return args
-    }
-}
-
-enum StealthEndpointParser {
-    static func parse(from configText: String) -> (host: String, port: UInt16)? {
-        var inPeer = false
-        for rawLine in configText.split(separator: "\n", omittingEmptySubsequences: false) {
-            let line = String(rawLine).trimmingCharacters(in: .whitespaces)
-            if line.hasPrefix("["), line.hasSuffix("]") {
-                inPeer = line.dropFirst().dropLast().lowercased() == "peer"
-                continue
-            }
-            guard inPeer, let equals = line.firstIndex(of: "=") else { continue }
-            let key = line[..<equals].trimmingCharacters(in: .whitespaces).lowercased()
-            guard key == "endpoint" else { continue }
-            let value = line[line.index(after: equals)...].trimmingCharacters(in: .whitespaces)
-            return parseHostPort(value)
-        }
-        return nil
-    }
-
-    private static func parseHostPort(_ value: String) -> (host: String, port: UInt16)? {
-        if value.hasPrefix("["), let close = value.firstIndex(of: "]") {
-            let host = String(value[value.index(after: value.startIndex) ..< close])
-            let rest = value[value.index(after: close)...]
-            guard rest.hasPrefix(":"), let port = UInt16(rest.dropFirst()) else { return nil }
-            return (host, port)
-        }
-        guard let colon = value.lastIndex(of: ":") else { return nil }
-        let host = String(value[..<colon])
-        guard let port = UInt16(value[value.index(after: colon)...]), !host.isEmpty else { return nil }
-        return (host, port)
-    }
-}
-
-enum StealthOrchestratorError: Error, LocalizedError {
-    case portAllocationFailed
-    case missingPeerEndpoint
-    case missingTool(String)
-
-    var errorDescription: String? {
-        switch self {
-        case .portAllocationFailed:
-            return "Unable to allocate a free localhost port"
-        case .missingPeerEndpoint:
-            return "Tunnel config missing Peer Endpoint"
-        case let .missingTool(name):
-            return "\(name) not installed"
-        }
+        store.deleteRuntimeFiles(tunnelName: state.tunnelName, aliasName: state.aliasName)
     }
 }
