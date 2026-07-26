@@ -79,6 +79,9 @@
 		A101000021CD90000001E742 /* StealthSettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E741 /* StealthSettingsStore.swift */; };
 		A101000021CD90000001E743 /* StealthSettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E741 /* StealthSettingsStore.swift */; };
 		A101000021CD90000001E752 /* StealthSettingsStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E751 /* StealthSettingsStoreTests.swift */; };
+		A101000021CD90000001E762 /* EphemeralConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E761 /* EphemeralConfig.swift */; };
+		A101000021CD90000001E763 /* EphemeralConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E761 /* EphemeralConfig.swift */; };
+		A101000021CD90000001E772 /* EphemeralConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E771 /* EphemeralConfigTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -173,6 +176,8 @@
 		A101000021CD90000001E731 /* StealthArgSecurityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StealthArgSecurityTests.swift; sourceTree = "<group>"; };
 		A101000021CD90000001E741 /* StealthSettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StealthSettingsStore.swift; sourceTree = "<group>"; };
 		A101000021CD90000001E751 /* StealthSettingsStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StealthSettingsStoreTests.swift; sourceTree = "<group>"; };
+		A101000021CD90000001E761 /* EphemeralConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EphemeralConfig.swift; sourceTree = "<group>"; };
+		A101000021CD90000001E771 /* EphemeralConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EphemeralConfigTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -215,6 +220,7 @@
 				040B449C2120474200E87CF5 /* SKQueue.swift */,
 				0444B861211F5CD700CA6ECA /* main.swift */,
 				04B92494211F6A68008D964A /* Helper.swift */,
+				A101000021CD90000001E761 /* EphemeralConfig.swift */,
 				04B9249B211F7200008D964A /* Launchd.plist */,
 				04B9249C211F7215008D964A /* Info.plist */,
 				0428EA0C21BB066E00178BA0 /* WireGuard.swift */,
@@ -245,6 +251,7 @@
 				A101000021CD90000001E721 /* StealthProfileTests.swift */,
 				A101000021CD90000001E731 /* StealthArgSecurityTests.swift */,
 				A101000021CD90000001E751 /* StealthSettingsStoreTests.swift */,
+				A101000021CD90000001E771 /* EphemeralConfigTests.swift */,
 				04B2BD4521BDA69000CCAE2F /* Info.plist */,
 				04C5BE2921E5266A009EE19A /* Shared.swift */,
 			);
@@ -523,6 +530,7 @@
 				0456DA6921BB0C9000701CCE /* SecurityValidation.swift in Sources */,
 				A101000021CD90000001E703 /* StealthTypes.swift in Sources */,
 				A101000021CD90000001E713 /* StealthArgSecurity.swift in Sources */,
+				A101000021CD90000001E762 /* EphemeralConfig.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -562,6 +570,8 @@
 				A101000021CD90000001E732 /* StealthArgSecurityTests.swift in Sources */,
 				A101000021CD90000001E752 /* StealthSettingsStoreTests.swift in Sources */,
 				A101000021CD90000001E743 /* StealthSettingsStore.swift in Sources */,
+				A101000021CD90000001E772 /* EphemeralConfigTests.swift in Sources */,
+				A101000021CD90000001E763 /* EphemeralConfig.swift in Sources */,
 				0401E2AD21CD855F0030E707 /* Menu.swift in Sources */,
 				0401E29F21C993EF0030E707 /* AppProtocol.swift in Sources */,
 				0466E5B921C1AB5700113B45 /* Const.swift in Sources */,
