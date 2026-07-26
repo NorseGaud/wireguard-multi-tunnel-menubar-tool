@@ -185,7 +185,9 @@ final class StealthPreferencesView: NSView {
 
         var hints: [String] = []
         if !toolsStatus.wstunnel { hints.append("brew install wstunnel") }
-        if !toolsStatus.udp2raw { hints.append("brew install udp2raw") }
+        if !toolsStatus.udp2raw {
+            hints.append("# udp2raw: no brew formula; install $(brew --prefix)/bin/udp2raw (see README)")
+        }
         if !toolsStatus.amnezia {
             hints.append("# Amnezia: build awg-quick + amneziawg-go into $(brew --prefix)/bin")
         }
