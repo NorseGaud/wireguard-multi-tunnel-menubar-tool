@@ -17,6 +17,7 @@ This is a macOS statusbar item (aka menubar icon) that wraps wg-quick. It allows
 - Indicates if tunnels are enabled
 - Bring tunnel up/down via one click
 - **Support for having multiple tunnels enabled at once (Official Wireguard app doesn't support this)**
+- **Per-tunnel stealth / obfuscation** — optional AmneziaWG, udp2raw, and wstunnel layers (see [Stealth / obfuscation](#stealth--obfuscation))
 - Exit tunnels on quit
 - ~~Fail miserably when brew/wg-quick is not installed or permissions on files are incorrect~~
 
@@ -32,6 +33,41 @@ This is a macOS statusbar item (aka menubar icon) that wraps wg-quick. It allows
 #### Non-default Homebrew or `wg-quick` location
 
 If WireGuard tools live outside the default prefix ([since 1.16](https://github.com/NorseGaud/macos-menubar-wireguard/releases/tag/1.16)), set helper paths with root `defaults` as described in [SECURITY.md](SECURITY.md#path-hardening).
+
+## Stealth / obfuscation
+
+Optional per-tunnel wrappers help traffic look less like WireGuard UDP on the wire. Configure them in **Preferences → Stealth**: pick a tunnel, enable one or more layers, and save. Profiles are stored by the app (not in your `.conf` files on disk).
+
+**Stacking order** (when multiple layers are enabled):
+
+| Direction | Order |
+|-----------|-------|
+| Packet path | WireGuard/Amnezia → udp2raw → wstunnel → network |
+| Bring-up (start) | wstunnel → udp2raw → WireGuard/Amnezia |
+| Tear-down (stop) | WireGuard/Amnezia → udp2raw → wstunnel |
+
+The helper resolves stealth binaries under `$(brewPrefix)/bin` (same prefix as `wg-quick`; default `/opt/homebrew`). Preferences shows **Installed** / **Missing** per tool.
+
+### Installing stealth tools
+
+**wstunnel** — Homebrew formula available:
+
+```bash
+brew install wstunnel
+```
+
+**udp2raw** — there is **no** Homebrew formula named `udp2raw`. The helper expects an executable named exactly `udp2raw` at `$(brew --prefix)/bin/udp2raw`. Homebrew's [`udp2raw-multiplatform`](https://formulae.brew.sh/formula/udp2raw-multiplatform) formula installs `udp2raw_mp` instead, which the helper does not probe for. Build [wangyu-/udp2raw-tunnel](https://github.com/wangyu-/udp2raw-tunnel) (or another build that installs as `udp2raw`) into `$(brew --prefix)/bin`, or place a compatible binary there manually.
+
+**AmneziaWG** — no stable Homebrew formula. Build both:
+
+- [amneziawg-tools](https://github.com/amnezia-vpn/amneziawg-tools) (`awg-quick`)
+- [amneziawg-go](https://github.com/amnezia-vpn/amneziawg-go) (`amneziawg-go`)
+
+…into `$(brew --prefix)/bin`, or use root `defaults` overrides analogous to `wgquickBinPath` if your binaries live elsewhere (see [SECURITY.md](SECURITY.md#path-hardening)). Amnezia requires **both** `awg-quick` and `amneziawg-go`.
+
+### Server and trust
+
+Your VPN server must already speak the matching protocols (Amnezia parameters, udp2raw mode/password, wstunnel URL). Obfuscation changes how packets are transported; it is **not** a substitute for WireGuard cryptography or endpoint trust — verify server identity and keys as you would for a normal WireGuard tunnel.
 
 ## Building & Testing
 
@@ -91,6 +127,7 @@ This software as a whole is licensed under GPL-3.0
 - Menubar and menu UX: connected-tunnel highlighting, toggle-in-progress spinner, standard About panel, install-instructions entry when WireGuard tools are missing
 - Release versioning from root `VERSION` file (synced into app and helper plists on `make dist`)
 - macOS 12+ deployment target and updated Xcode / lint tooling (`AGENTS.md` for contributors)
+- Per-tunnel stealth / obfuscation (AmneziaWG, udp2raw, wstunnel) — Preferences → Stealth; see [Stealth / obfuscation](#stealth--obfuscation)
 
 ### Planned
 

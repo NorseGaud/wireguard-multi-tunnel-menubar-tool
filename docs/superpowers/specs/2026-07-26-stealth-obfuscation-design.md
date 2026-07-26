@@ -188,12 +188,12 @@ Existing “shutdown connected tunnels” behavior must also tear down stealth s
 
 ## Homebrew expectations
 
-Document concrete `brew install …` lines in README and Preferences once formula names are verified during implementation. Expected categories:
+Verified during implementation (see README **Stealth / obfuscation**):
 
-- `wireguard-tools` (existing)
-- AmneziaWG userspace tools (pin the actual Homebrew formula/binary names in README when implementing; helper resolves them under `brewPrefix`)
-- `wstunnel`
-- `udp2raw` (pin the actual Homebrew formula/binary name when implementing)
+- `wireguard-tools` (existing) — `wg`, `wg-quick`
+- `wstunnel` — `brew install wstunnel` → `$(brewPrefix)/bin/wstunnel`
+- `udp2raw` — **no** formula named `udp2raw`. Helper probes `$(brewPrefix)/bin/udp2raw`. Homebrew's `udp2raw-multiplatform` installs `udp2raw_mp` instead; build or install a binary named `udp2raw` into the prefix manually.
+- AmneziaWG — **no** stable Homebrew formula. Build [amneziawg-tools](https://github.com/amnezia-vpn/amneziawg-tools) (`awg-quick`) and [amneziawg-go](https://github.com/amnezia-vpn/amneziawg-go) into `$(brewPrefix)/bin`; both are required when Amnezia is enabled.
 
 Binaries are always resolved under the configured `brewPrefix` (default `/opt/homebrew`), same as today.
 
