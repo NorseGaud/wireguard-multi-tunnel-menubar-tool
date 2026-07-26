@@ -160,23 +160,23 @@ class Helper: NSObject, HelperProtocol, SKQueueDelegate {
             return
         }
 
-        let profile: StealthProfile
+        let plan: StealthSetTunnelPlan
         do {
-            profile = try StealthProfile.parse(jsonString: stealthProfileJSON)
-            try profile.validate()
+            plan = try StealthSetTunnelPlanner.plan(enable: enable, stealthProfileJSON: stealthProfileJSON)
         } catch {
             reply(false, "Invalid stealth profile: \(error)")
             return
         }
 
         let (success, errorMessage): (Bool, String)
-        if !enable {
-            (success, errorMessage) = bringTunnelDown(tunnelName: tunnelName, profile: profile)
-        } else if profile.hasAnyLayerEnabled {
-            (success, errorMessage) = bringStealthTunnelUp(tunnelName: tunnelName, profile: profile)
-        } else {
+        switch plan {
+        case .down:
+            (success, errorMessage) = bringTunnelDown(tunnelName: tunnelName)
+        case .upPlain:
             NSLog("Set tunnel \(tunnelName) up")
             (success, errorMessage) = wireguard.setTunnel(tunnelName: tunnelName, enable: true)
+        case let .upStealth(profile):
+            (success, errorMessage) = bringStealthTunnelUp(tunnelName: tunnelName, profile: profile)
         }
 
         reply(success, errorMessage)
@@ -331,23 +331,29 @@ private extension Helper {
         )
     }
 
-    func bringTunnelDown(tunnelName: String, profile: StealthProfile) -> (Bool, String) {
+    func bringTunnelDown(tunnelName: String) -> (Bool, String) {
         let orchestrator = makeStealthOrchestrator()
         guard let state = orchestrator.runtimeState(for: tunnelName) else {
             NSLog("Set tunnel \(tunnelName) down")
             return wireguard.setTunnel(tunnelName: tunnelName, enable: false)
         }
 
-        let toolPaths = resolveStealthToolPaths()
-        let useAmnezia = state.useAmnezia ?? profile.amnezia.enabled
-        let quickBin = quickBinPath(useAmnezia: useAmnezia, toolPaths: toolPaths)
-        let aliasName = state.aliasName
-
         NSLog("Set stealth tunnel \(tunnelName) down")
-        let (success, errorMessage) = orchestrator.bringDown(tunnelName: tunnelName) {
-            self.downEphemeralInterface(aliasName: aliasName, quickBinPath: quickBin)
-        }
+        return tearDownStealthRuntime(tunnelName: tunnelName, state: state, orchestrator: orchestrator)
+    }
 
+    /// Orchestrator bringDown, then force interface down if still present (same as bringTunnelDown).
+    func tearDownStealthRuntime(
+        tunnelName: String,
+        state: StealthOrchestrator.TunnelState,
+        orchestrator: StealthOrchestrator
+    ) -> (Bool, String) {
+        let toolPaths = resolveStealthToolPaths()
+        let useAmnezia = state.useAmnezia ?? false
+        let quickBin = quickBinPath(useAmnezia: useAmnezia, toolPaths: toolPaths)
+        let (success, errorMessage) = orchestrator.bringDown(tunnelName: tunnelName) {
+            self.downEphemeralInterface(aliasName: state.aliasName, quickBinPath: quickBin)
+        }
         if !wireguard.interfaceName(tunnelName).isEmpty {
             _ = wireguard.setTunnel(tunnelName: tunnelName, enable: false, quickBinPath: quickBin)
         }
@@ -367,13 +373,11 @@ private extension Helper {
         wireguard.shutdownConnectedTunnels { tunnelName in
             guard let state = orchestrator.runtimeState(for: tunnelName) else { return nil }
             NSLog("Shutting down stealth tunnel '\(tunnelName)' on app quit")
-            let toolPaths = self.resolveStealthToolPaths()
-            let useAmnezia = state.useAmnezia ?? false
-            let quickBin = self.quickBinPath(useAmnezia: useAmnezia, toolPaths: toolPaths)
-            let aliasName = state.aliasName
-            return orchestrator.bringDown(tunnelName: tunnelName) {
-                self.downEphemeralInterface(aliasName: aliasName, quickBinPath: quickBin)
-            }
+            return self.tearDownStealthRuntime(
+                tunnelName: tunnelName,
+                state: state,
+                orchestrator: orchestrator
+            )
         }
         clearOrphanedStealthStacks(orchestrator: orchestrator)
     }
@@ -386,12 +390,11 @@ private extension Helper {
                   let state = orchestrator.runtimeState(for: tunnelName)
             else { continue }
             NSLog("Clearing orphaned stealth stack '\(tunnelName)' on app quit")
-            let toolPaths = resolveStealthToolPaths()
-            let useAmnezia = state.useAmnezia ?? false
-            let quickBin = quickBinPath(useAmnezia: useAmnezia, toolPaths: toolPaths)
-            _ = orchestrator.bringDown(tunnelName: tunnelName) {
-                self.downEphemeralInterface(aliasName: state.aliasName, quickBinPath: quickBin)
-            }
+            _ = tearDownStealthRuntime(
+                tunnelName: tunnelName,
+                state: state,
+                orchestrator: orchestrator
+            )
         }
     }
 }

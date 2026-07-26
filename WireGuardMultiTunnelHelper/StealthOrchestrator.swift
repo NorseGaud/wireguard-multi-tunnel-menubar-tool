@@ -117,10 +117,6 @@ final class StealthOrchestrator {
         }
     }
 
-    func hasRuntimeState(for tunnelName: String) -> Bool {
-        store.load(tunnelName: tunnelName) != nil
-    }
-
     func runtimeState(for tunnelName: String) -> TunnelState? {
         store.load(tunnelName: tunnelName)
     }

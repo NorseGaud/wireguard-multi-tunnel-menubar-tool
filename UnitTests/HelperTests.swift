@@ -71,4 +71,30 @@ class HelperTests: XCTestCase {
         }
         wait(for: [exp], timeout: 2)
     }
+
+    func testDisablePlanIgnoresInvalidAndIncompleteProfileJSON() throws {
+        XCTAssertEqual(
+            try StealthSetTunnelPlanner.plan(enable: false, stealthProfileJSON: "{not-json"),
+            .down
+        )
+        let incomplete = #"{"schemaVersion":1,"udp2raw":{"enabled":true}}"#
+        XCTAssertEqual(
+            try StealthSetTunnelPlanner.plan(enable: false, stealthProfileJSON: incomplete),
+            .down
+        )
+        XCTAssertEqual(
+            try StealthSetTunnelPlanner.plan(enable: false, stealthProfileJSON: ""),
+            .down
+        )
+    }
+
+    func testEnablePlanRejectsInvalidProfileJSON() {
+        XCTAssertThrowsError(
+            try StealthSetTunnelPlanner.plan(enable: true, stealthProfileJSON: "{not-json")
+        )
+        let incomplete = #"{"schemaVersion":1,"udp2raw":{"enabled":true}}"#
+        XCTAssertThrowsError(
+            try StealthSetTunnelPlanner.plan(enable: true, stealthProfileJSON: incomplete)
+        )
+    }
 }

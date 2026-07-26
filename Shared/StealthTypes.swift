@@ -103,3 +103,20 @@ enum StealthValidationError: Error, Equatable {
     case invalidJSON
     case invalidExtraArgs(String)
 }
+
+/// Routes setTunnel enable/disable before touching WireGuard or the orchestrator.
+/// Disable never parses/validates profile JSON (teardown uses runtime state alone).
+enum StealthSetTunnelPlan: Equatable {
+    case down
+    case upPlain
+    case upStealth(StealthProfile)
+}
+
+enum StealthSetTunnelPlanner {
+    static func plan(enable: Bool, stealthProfileJSON: String) throws -> StealthSetTunnelPlan {
+        guard enable else { return .down }
+        let profile = try StealthProfile.parse(jsonString: stealthProfileJSON)
+        try profile.validate()
+        return profile.hasAnyLayerEnabled ? .upStealth(profile) : .upPlain
+    }
+}
