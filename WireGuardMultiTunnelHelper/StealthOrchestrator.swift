@@ -10,10 +10,9 @@ import Foundation
 /// port readiness (bind probe: EADDRINUSE ⇒ in use) for up to `readinessTimeout`.
 /// Immediately before `runWgQuick`, re-checks that wrapper pids are still alive.
 ///
-/// Argv shapes (binaries not installed locally at impl time; verify against
-/// `wstunnel --help` / `udp2raw --help` when available):
-/// - wstunnel client: `client -L udp://127.0.0.1:<local>:<exitHost>:<exitPort> <serverURL>`
-/// - udp2raw client: `-c -l 127.0.0.1:<local> -r <remoteHost>:<remotePort> -k <password> --raw-mode <mode>`
+/// Argv shapes (erebe/wstunnel v9+ / udp2raw-tunnel; verify against installed `--help`):
+/// - wstunnel: `client -L udp://127.0.0.1:<local>:<exitHost>:<exitPort> [--tls-verify-certificate] <serverURL>`
+/// - udp2raw: `-c -l 127.0.0.1:<local> -r <remoteHost>:<remotePort> -k <password> --raw-mode <mode>`
 final class StealthOrchestrator {
     struct TunnelState: Codable {
         var tunnelName: String
@@ -85,7 +84,7 @@ final class StealthOrchestrator {
 
         do {
             try store.ensureRunDirectory()
-            cleanupStaleStateIfNeeded(tunnelName: tunnelName)
+            cleanupStaleStateIfNeeded(tunnelName: tunnelName, runWgQuickDown: runWgQuickDown)
 
             let localEndpoint = try startWrappersIfNeeded(
                 profile: profile,
@@ -140,8 +139,13 @@ final class StealthOrchestrator {
         return (succeeded, message)
     }
 
-    private func cleanupStaleStateIfNeeded(tunnelName: String) {
+    private func cleanupStaleStateIfNeeded(
+        tunnelName: String,
+        runWgQuickDown: (() -> (Bool, String))?
+    ) {
         guard let stale = store.load(tunnelName: tunnelName) else { return }
+        // Best-effort down of prior interface before restarting wrappers (avoids orphan utun).
+        _ = runWgQuickDown?()
         if let udp2rawPid = stale.udp2rawPid {
             runner.stop(pid: udp2rawPid)
         }

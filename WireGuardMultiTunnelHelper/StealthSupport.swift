@@ -8,15 +8,17 @@ enum StealthClientArgv {
         exitPort: UInt16,
         profile: WsTunnelSettings
     ) -> [String] {
+        // erebe/wstunnel v9+: verification is off by default; `--tls-verify-certificate`
+        // enables it. There is no `--tls-skip-verify`. When tlsSkipVerify is true, omit
+        // the verify flag (upstream default). When false, request verification.
         var args = [
             "client",
             "-L",
             "udp://127.0.0.1:\(localPort):\(exitHost):\(exitPort)",
         ]
-        if profile.tlsSkipVerify {
-            args.append("--tls-skip-verify")
+        if !profile.tlsSkipVerify {
+            args.append("--tls-verify-certificate")
         }
-        args.append(contentsOf: profile.extraArgs)
         args.append(profile.serverURL)
         return args
     }
@@ -28,15 +30,13 @@ enum StealthClientArgv {
         remotePort: UInt16,
         profile: Udp2RawSettings
     ) -> [String] {
-        var args = [
+        return [
             "-c",
             "-l", "127.0.0.1:\(localPort)",
             "-r", "\(remoteHost):\(remotePort)",
             "-k", profile.password,
             "--raw-mode", profile.rawMode.rawValue,
         ]
-        args.append(contentsOf: profile.extraArgs)
-        return args
     }
 }
 

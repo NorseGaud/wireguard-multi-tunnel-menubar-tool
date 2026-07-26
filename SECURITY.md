@@ -113,7 +113,7 @@ When a tunnel is brought up with stealth layers enabled, the helper:
 
 - Accepts a **JSON stealth profile** over XPC (`setTunnel(..., stealthProfileJSON:)`). The app stores profiles per tunnel; they are not written into the user's on-disk `.conf` files.
 - Writes **ephemeral configs** under `/var/run/wireguard-multitunnel/stealth/` (`stealthRunPath`). These are rewritten copies (local endpoint injection, optional Amnezia keys) used only for the current session and removed on tear-down.
-- Starts wrapper processes with **argv only** — no shell invocation. Optional per-layer `extraArgs` are validated with an allowlist (`StealthArgSecurity`) that rejects shell metacharacters and empty tokens.
+- Starts wrapper processes with **argv only** — no shell invocation. Free-form per-layer `extraArgs` are rejected in v1 (`StealthValidationError.extraArgsNotSupported`).
 - **Does not log** udp2raw passwords, Amnezia secrets, or full stealth profile payloads. Logs are limited to layer names, ports, PIDs, and exit codes.
 
 Stealth obfuscation changes transport appearance; it does not replace WireGuard's cryptographic trust model. Endpoint trust and key verification remain the user's responsibility.

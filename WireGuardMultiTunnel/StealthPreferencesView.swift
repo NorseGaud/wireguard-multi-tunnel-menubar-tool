@@ -109,12 +109,10 @@ final class StealthPreferencesView: NSView {
         controls.udpPortField.stringValue = profile.udp2raw.remotePort == 0 ? "" : String(profile.udp2raw.remotePort)
         controls.udpPasswordField.stringValue = profile.udp2raw.password
         controls.udpModePopup.selectItem(withTitle: profile.udp2raw.rawMode.rawValue)
-        controls.udpExtraArgsField.stringValue = profile.udp2raw.extraArgs.joined(separator: " ")
 
         controls.wstunnelCheckbox.state = profile.wstunnel.enabled ? .on : .off
         controls.wsURLField.stringValue = profile.wstunnel.serverURL
         controls.wsTLSSkipCheckbox.state = profile.wstunnel.tlsSkipVerify ? .on : .off
-        controls.wsExtraArgsField.stringValue = profile.wstunnel.extraArgs.joined(separator: " ")
     }
 
     private func clearFields() {
@@ -146,17 +144,14 @@ final class StealthPreferencesView: NSView {
         if let mode = Udp2RawSettings.RawMode(rawValue: controls.udpModePopup.titleOfSelectedItem ?? "") {
             profile.udp2raw.rawMode = mode
         }
-        profile.udp2raw.extraArgs = splitArgs(controls.udpExtraArgsField.stringValue)
+        // v1: extraArgs unsupported — always persist empty.
+        profile.udp2raw.extraArgs = []
 
         profile.wstunnel.enabled = controls.wstunnelCheckbox.state == .on
         profile.wstunnel.serverURL = controls.wsURLField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         profile.wstunnel.tlsSkipVerify = controls.wsTLSSkipCheckbox.state == .on
-        profile.wstunnel.extraArgs = splitArgs(controls.wsExtraArgsField.stringValue)
+        profile.wstunnel.extraArgs = []
         return profile
-    }
-
-    private func splitArgs(_ value: String) -> [String] {
-        value.split(whereSeparator: { $0.isWhitespace }).map(String.init)
     }
 
     private func autosave() {

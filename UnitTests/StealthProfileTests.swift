@@ -42,4 +42,18 @@ class StealthProfileTests: XCTestCase {
         profile.wstunnel.enabled = true
         XCTAssertThrowsError(try profile.validate())
     }
+
+    func testRejectsNonEmptyExtraArgsInV1() {
+        var udpProfile = StealthProfile()
+        udpProfile.udp2raw.extraArgs = ["--foo"]
+        XCTAssertThrowsError(try udpProfile.validate()) { error in
+            XCTAssertEqual(error as? StealthValidationError, .extraArgsNotSupported)
+        }
+
+        var wsProfile = StealthProfile()
+        wsProfile.wstunnel.extraArgs = ["--bar"]
+        XCTAssertThrowsError(try wsProfile.validate()) { error in
+            XCTAssertEqual(error as? StealthValidationError, .extraArgsNotSupported)
+        }
+    }
 }

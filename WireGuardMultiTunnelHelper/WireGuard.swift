@@ -218,11 +218,12 @@ struct WireGuard {
         task.waitUntilExit()
 
         let errdata = errpipe.fileHandleForReading.readDataToEndOfFile()
-        let errorMessage = String(data: errdata, encoding: String.Encoding.utf8) ?? ""
+        let rawErrorMessage = String(data: errdata, encoding: String.Encoding.utf8) ?? ""
+        // Always censor before returning — XPC replies / app notifications must not leak keys.
+        let errorMessage = WireGuard.censorConfigurationData(rawErrorMessage)
 
         if task.terminationStatus != 0 {
-            let sanitizedError = WireGuard.censorConfigurationData(errorMessage)
-            let logMessage = sanitizedError.trimmingCharacters(in: .whitespacesAndNewlines)
+            let logMessage = errorMessage.trimmingCharacters(in: .whitespacesAndNewlines)
             let truncatedMessage = logMessage.count > 200
                 ? String(logMessage.prefix(200)) + "..."
                 : logMessage

@@ -49,6 +49,10 @@ struct StealthProfile: Codable, Equatable {
     }
 
     func validate() throws {
+        // v1: no free-form extraArgs (YAGNI). Reject non-empty even if the layer is off.
+        if !udp2raw.extraArgs.isEmpty || !wstunnel.extraArgs.isEmpty {
+            throw StealthValidationError.extraArgsNotSupported
+        }
         if amnezia.enabled {
             guard amnezia.jmin >= 0, amnezia.jmax >= amnezia.jmin, amnezia.jc >= 0 else {
                 throw StealthValidationError.invalidAmneziaParams
@@ -58,7 +62,6 @@ struct StealthProfile: Codable, Equatable {
             guard !udp2raw.remoteHost.isEmpty, udp2raw.remotePort > 0, !udp2raw.password.isEmpty else {
                 throw StealthValidationError.incompleteUdp2Raw
             }
-            try StealthArgSecurity.validateExtraArgs(udp2raw.extraArgs)
         }
         if wstunnel.enabled {
             guard let url = URL(string: wstunnel.serverURL),
@@ -67,7 +70,6 @@ struct StealthProfile: Codable, Equatable {
             else {
                 throw StealthValidationError.incompleteWsTunnel
             }
-            try StealthArgSecurity.validateExtraArgs(wstunnel.extraArgs)
         }
     }
 
@@ -102,6 +104,7 @@ enum StealthValidationError: Error, Equatable {
     case incompleteWsTunnel
     case invalidJSON
     case invalidExtraArgs(String)
+    case extraArgsNotSupported
 }
 
 /// Routes setTunnel enable/disable before touching WireGuard or the orchestrator.

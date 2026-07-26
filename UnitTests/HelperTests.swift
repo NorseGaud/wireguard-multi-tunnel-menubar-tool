@@ -50,6 +50,18 @@ class HelperTests: XCTestCase {
         }
     }
 
+    /// wg-quick stderr may echo config contents; replies must be censored
+    func testWgQuickErrorMessageIsCensored() {
+        let leaked = """
+        [#] wg-quick up failed
+        PrivateKey = \(testPrivateKey)
+        PresharedKey = \(testPrivateKey)
+        """
+        let censored = WireGuard.censorConfigurationData(leaked)
+        XCTAssertFalse(censored.contains(testPrivateKey))
+        XCTAssertTrue(censored.contains("PrivateKey = ***"))
+    }
+
     func testValidateDirectoryPathRejectsRelativePaths() {
         XCTAssertNil(PathSecurity.validateDirectoryPath("etc/wireguard"))
         XCTAssertNil(PathSecurity.validateDirectoryPath("/etc/../private/wireguard"))

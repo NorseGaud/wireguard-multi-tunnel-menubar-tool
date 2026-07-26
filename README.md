@@ -63,7 +63,28 @@ brew install wstunnel
 - [amneziawg-tools](https://github.com/amnezia-vpn/amneziawg-tools) (`awg-quick`)
 - [amneziawg-go](https://github.com/amnezia-vpn/amneziawg-go) (`amneziawg-go`)
 
-…into `$(brew --prefix)/bin`, or use root `defaults` overrides analogous to `wgquickBinPath` if your binaries live elsewhere (see [SECURITY.md](SECURITY.md#path-hardening)). Amnezia requires **both** `awg-quick` and `amneziawg-go`.
+…into `$(brew --prefix)/bin`. Unlike `wg-quick`, there are **no** per-binary root `defaults` overrides for Amnezia / udp2raw / wstunnel — only `brewPrefix` (and the existing `wgquickBinPath` for stock WireGuard) as described in [SECURITY.md](SECURITY.md#path-hardening). Install or symlink those tools under `${brewPrefix}/bin`. Amnezia requires **both** `awg-quick` and `amneziawg-go`.
+
+### Client argv shapes
+
+The helper builds wrapper argv as fixed arrays (no shell). Pin these against your installed binaries (`wstunnel --help` / `udp2raw --help`); a live CLI matrix was skipped when those tools were absent during development.
+
+**wstunnel** (erebe/wstunnel v9+ semantics):
+
+```text
+wstunnel client -L udp://127.0.0.1:<localPort>:<exitHost>:<exitPort> [--tls-verify-certificate] <serverURL>
+```
+
+- `--tls-verify-certificate` is passed when Preferences **Skip TLS certificate verification** is unchecked (default). wstunnel itself defaults to *not* verifying; this app opts into verify unless you check skip.
+- There is no `--tls-skip-verify` flag.
+
+**udp2raw**:
+
+```text
+udp2raw -c -l 127.0.0.1:<localPort> -r <remoteHost>:<remotePort> -k <password> --raw-mode <faketcp|udp|icmp>
+```
+
+Free-form `extraArgs` are not supported in v1 (validation rejects non-empty values).
 
 ### Server and trust
 

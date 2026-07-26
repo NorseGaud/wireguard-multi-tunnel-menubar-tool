@@ -93,6 +93,10 @@
 		A101000021CD90000001E7B2 /* StealthSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E7B1 /* StealthSupport.swift */; };
 		A101000021CD90000001E7B3 /* StealthSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E7B1 /* StealthSupport.swift */; };
 		A101000021CD90000001E7A2 /* StealthOrchestratorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E7A1 /* StealthOrchestratorTests.swift */; };
+		A101000021CD90000001E7E2 /* Helper+Stealth.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E7E1 /* Helper+Stealth.swift */; };
+		A101000021CD90000001E7E3 /* Helper+Stealth.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E7E1 /* Helper+Stealth.swift */; };
+		A101000021CD90000001E7E4 /* Helper+Stealth.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E7E1 /* Helper+Stealth.swift */; };
+		A101000021CD90000001E7F2 /* StealthClientArgvTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E7F1 /* StealthClientArgvTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -195,6 +199,8 @@
 		A101000021CD90000001E791 /* StealthOrchestrator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StealthOrchestrator.swift; sourceTree = "<group>"; };
 		A101000021CD90000001E7B1 /* StealthSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StealthSupport.swift; sourceTree = "<group>"; };
 		A101000021CD90000001E7A1 /* StealthOrchestratorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StealthOrchestratorTests.swift; sourceTree = "<group>"; };
+		A101000021CD90000001E7E1 /* Helper+Stealth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Helper+Stealth.swift"; sourceTree = "<group>"; };
+		A101000021CD90000001E7F1 /* StealthClientArgvTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StealthClientArgvTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -237,6 +243,7 @@
 				040B449C2120474200E87CF5 /* SKQueue.swift */,
 				0444B861211F5CD700CA6ECA /* main.swift */,
 				04B92494211F6A68008D964A /* Helper.swift */,
+				A101000021CD90000001E7E1 /* Helper+Stealth.swift */,
 				A101000021CD90000001E761 /* EphemeralConfig.swift */,
 				A101000021CD90000001E781 /* StealthProcessRunner.swift */,
 				A101000021CD90000001E791 /* StealthOrchestrator.swift */,
@@ -273,6 +280,7 @@
 				A101000021CD90000001E751 /* StealthSettingsStoreTests.swift */,
 				A101000021CD90000001E771 /* EphemeralConfigTests.swift */,
 				A101000021CD90000001E7A1 /* StealthOrchestratorTests.swift */,
+				A101000021CD90000001E7F1 /* StealthClientArgvTests.swift */,
 				04B2BD4521BDA69000CCAE2F /* Info.plist */,
 				04C5BE2921E5266A009EE19A /* Shared.swift */,
 			);
@@ -547,6 +555,7 @@
 				0401E2A221CC3CFA0030E707 /* SKQueue.swift in Sources */,
 				0401E29521C856DC0030E707 /* AppProtocol.swift in Sources */,
 				04B92495211F6A68008D964A /* Helper.swift in Sources */,
+				A101000021CD90000001E7E2 /* Helper+Stealth.swift in Sources */,
 				0401E2A821CD811B0030E707 /* Types.swift in Sources */,
 				0401E2A621CCFFB10030E707 /* AppXPC.swift in Sources */,
 				0456DA6721BB0C9C00701CCE /* Const.swift in Sources */,
@@ -570,6 +579,7 @@
 				0401E2BA21CD977E0030E707 /* Types.swift in Sources */,
 				0401E2BB21CD97AC0030E707 /* AppProtocol.swift in Sources */,
 				0401E2B521CD973F0030E707 /* Helper.swift in Sources */,
+				A101000021CD90000001E7E3 /* Helper+Stealth.swift in Sources */,
 				0401E2B621CD97670030E707 /* SKQueue.swift in Sources */,
 				047AE5D921DE7D390099ABF6 /* HelperTests.swift in Sources */,
 				0401E2B921CD97770030E707 /* HelperProtocol.swift in Sources */,
@@ -602,6 +612,8 @@
 				A101000021CD90000001E793 /* StealthOrchestrator.swift in Sources */,
 				A101000021CD90000001E7B3 /* StealthSupport.swift in Sources */,
 				A101000021CD90000001E7A2 /* StealthOrchestratorTests.swift in Sources */,
+				A101000021CD90000001E7F2 /* StealthClientArgvTests.swift in Sources */,
+				A101000021CD90000001E7E4 /* Helper+Stealth.swift in Sources */,
 				0401E2AD21CD855F0030E707 /* Menu.swift in Sources */,
 				0401E29F21C993EF0030E707 /* AppProtocol.swift in Sources */,
 				0466E5B921C1AB5700113B45 /* Const.swift in Sources */,

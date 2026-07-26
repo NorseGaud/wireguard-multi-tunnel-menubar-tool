@@ -29,11 +29,14 @@ final class StealthPreferencesControls {
     let udpPortField = NSTextField(string: "")
     let udpPasswordField = NSSecureTextField(string: "")
     let udpModePopup = NSPopUpButton(frame: .zero, pullsDown: false)
-    let udpExtraArgsField = NSTextField(string: "")
 
     let wsURLField = NSTextField(string: "")
-    let wsTLSSkipCheckbox = NSButton(checkboxWithTitle: "Skip TLS verify", target: nil, action: nil)
-    let wsExtraArgsField = NSTextField(string: "")
+    /// When checked: omit `--tls-verify-certificate` (wstunnel v9+ default). When unchecked: verify.
+    let wsTLSSkipCheckbox = NSButton(
+        checkboxWithTitle: "Skip TLS certificate verification",
+        target: nil,
+        action: nil
+    )
 
     let installHintsLabel = NSTextField(wrappingLabelWithString: "")
 
@@ -61,8 +64,7 @@ final class StealthPreferencesControls {
         let numeric = [jcField, jminField, jmaxField, s1Field, s2Field,
                        h1Field, h2Field, h3Field, h4Field, udpPortField]
         configureFields(numeric, target: target, change: change, numericWidth: 100)
-        configureFields([udpHostField, udpExtraArgsField, wsURLField, wsExtraArgsField],
-                        target: target, change: change, numericWidth: nil)
+        configureFields([udpHostField, wsURLField], target: target, change: change, numericWidth: nil)
         udpPasswordField.target = target
         udpPasswordField.action = change
         if let delegate = target as? NSTextFieldDelegate {
@@ -77,10 +79,9 @@ final class StealthPreferencesControls {
         configureStack(udp2rawFieldsStack, rows: [
             ("Remote host", udpHostField), ("Remote port", udpPortField),
             ("Password", udpPasswordField), ("Raw mode", udpModePopup),
-            ("Extra args", udpExtraArgsField),
         ])
         configureStack(wstunnelFieldsStack, rows: [
-            ("Server URL", wsURLField), ("Extra args", wsExtraArgsField),
+            ("Server URL", wsURLField),
         ])
         wstunnelFieldsStack.insertArrangedSubview(wsTLSSkipCheckbox, at: 1)
 

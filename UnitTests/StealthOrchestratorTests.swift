@@ -269,6 +269,7 @@ class StealthOrchestratorTests: XCTestCase {
             encoding: .utf8
         )
 
+        var staleDownCalled = false
         let orch = StealthOrchestratorTestFixtures.makeOrchestrator(
             runner: runner,
             runDirectory: runDir.path
@@ -278,9 +279,14 @@ class StealthOrchestratorTests: XCTestCase {
             sourceConfigPath: configURL.path,
             profile: StealthOrchestratorTestFixtures.stackedProfile(),
             useAmnezia: false,
-            runWgQuick: { _ in (true, "") }
+            runWgQuick: { _ in (true, "") },
+            runWgQuickDown: {
+                staleDownCalled = true
+                return (true, "")
+            }
         )
         XCTAssertTrue(succeeded)
+        XCTAssertTrue(staleDownCalled)
         XCTAssertEqual(Array(runner.stopped.prefix(2)), [43, 42])
         XCTAssertEqual(runner.started.map(\.0), ["/usr/local/bin/wstunnel", "/usr/local/bin/udp2raw"])
     }
