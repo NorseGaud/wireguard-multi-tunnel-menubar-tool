@@ -66,6 +66,15 @@
 		04B4BE49211E1E030001213A /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 04B4BE47211E1E030001213A /* MainMenu.xib */; };
 		04B92495211F6A68008D964A /* Helper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04B92494211F6A68008D964A /* Helper.swift */; };
 		04C5BE2A21E5266A009EE19A /* Shared.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04C5BE2921E5266A009EE19A /* Shared.swift */; };
+		A101000021CD90000001E702 /* StealthTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E701 /* StealthTypes.swift */; };
+		A101000021CD90000001E703 /* StealthTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E701 /* StealthTypes.swift */; };
+		A101000021CD90000001E704 /* StealthTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E701 /* StealthTypes.swift */; };
+		A101000021CD90000001E705 /* StealthTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E701 /* StealthTypes.swift */; };
+		A101000021CD90000001E712 /* StealthArgSecurity.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E711 /* StealthArgSecurity.swift */; };
+		A101000021CD90000001E713 /* StealthArgSecurity.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E711 /* StealthArgSecurity.swift */; };
+		A101000021CD90000001E714 /* StealthArgSecurity.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E711 /* StealthArgSecurity.swift */; };
+		A101000021CD90000001E715 /* StealthArgSecurity.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E711 /* StealthArgSecurity.swift */; };
+		A101000021CD90000001E722 /* StealthProfileTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E721 /* StealthProfileTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -154,6 +163,9 @@
 		04B9249B211F7200008D964A /* Launchd.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Launchd.plist; sourceTree = "<group>"; };
 		04B9249C211F7215008D964A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		04C5BE2921E5266A009EE19A /* Shared.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shared.swift; sourceTree = "<group>"; };
+		A101000021CD90000001E701 /* StealthTypes.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = StealthTypes.swift; path = Shared/StealthTypes.swift; sourceTree = "<group>"; };
+		A101000021CD90000001E711 /* StealthArgSecurity.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = StealthArgSecurity.swift; path = Shared/StealthArgSecurity.swift; sourceTree = "<group>"; };
+		A101000021CD90000001E721 /* StealthProfileTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StealthProfileTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -223,6 +235,7 @@
 			children = (
 				04B2BD4321BDA69000CCAE2F /* AppTests.swift */,
 				0401E2AE21CD91E00030E707 /* HelperTests.swift */,
+				A101000021CD90000001E721 /* StealthProfileTests.swift */,
 				04B2BD4521BDA69000CCAE2F /* Info.plist */,
 				04C5BE2921E5266A009EE19A /* Shared.swift */,
 			);
@@ -235,6 +248,8 @@
 				04B2BD2C21BD5DC800CCAE2F /* README.md */,
 				0456DA6221BB0C9000701CCE /* Const.swift */,
 				0456DA6821BB0C9000701CCE /* SecurityValidation.swift */,
+				A101000021CD90000001E701 /* StealthTypes.swift */,
+				A101000021CD90000001E711 /* StealthArgSecurity.swift */,
 				0401E2A721CD811B0030E707 /* Types.swift */,
 				0401E28C21C6F99A0030E707 /* AppProtocol.swift */,
 				0456DA6321BB0C9000701CCE /* HelperProtocol.swift */,
@@ -496,6 +511,8 @@
 				0401E2A621CCFFB10030E707 /* AppXPC.swift in Sources */,
 				0456DA6721BB0C9C00701CCE /* Const.swift in Sources */,
 				0456DA6921BB0C9000701CCE /* SecurityValidation.swift in Sources */,
+				A101000021CD90000001E703 /* StealthTypes.swift in Sources */,
+				A101000021CD90000001E713 /* StealthArgSecurity.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -515,6 +532,8 @@
 				0401E2B821CD97670030E707 /* AppXPC.swift in Sources */,
 				0401E2BC21CD97B20030E707 /* Const.swift in Sources */,
 				0456DA6C21BB0C9000701CCE /* SecurityValidation.swift in Sources */,
+				A101000021CD90000001E705 /* StealthTypes.swift in Sources */,
+				A101000021CD90000001E715 /* StealthArgSecurity.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -529,10 +548,13 @@
 				04C5BE2A21E5266A009EE19A /* Shared.swift in Sources */,
 				0466E5BA21C1AB5700113B45 /* HelperProtocol.swift in Sources */,
 				04B2BD4421BDA69000CCAE2F /* AppTests.swift in Sources */,
+				A101000021CD90000001E722 /* StealthProfileTests.swift in Sources */,
 				0401E2AD21CD855F0030E707 /* Menu.swift in Sources */,
 				0401E29F21C993EF0030E707 /* AppProtocol.swift in Sources */,
 				0466E5B921C1AB5700113B45 /* Const.swift in Sources */,
 				0456DA6B21BB0C9000701CCE /* SecurityValidation.swift in Sources */,
+				A101000021CD90000001E704 /* StealthTypes.swift in Sources */,
+				A101000021CD90000001E714 /* StealthArgSecurity.swift in Sources */,
 				0401E2AA21CD81210030E707 /* Types.swift in Sources */,
 				0401E2B321CD93370030E707 /* AppXPC.swift in Sources */,
 				0401E29B21C992C80030E707 /* Tunnel.swift in Sources */,
@@ -553,6 +575,8 @@
 				0401E2A921CD811F0030E707 /* Types.swift in Sources */,
 				0456DA6421BB0C9000701CCE /* Const.swift in Sources */,
 				0456DA6A21BB0C9000701CCE /* SecurityValidation.swift in Sources */,
+				A101000021CD90000001E702 /* StealthTypes.swift in Sources */,
+				A101000021CD90000001E712 /* StealthArgSecurity.swift in Sources */,
 				0401E29921C9913B0030E707 /* Tunnel.swift in Sources */,
 				0457E2FC21DFF1F600DD17A2 /* PreferencesController.swift in Sources */,
 				0401E2AC21CD853B0030E707 /* Menu.swift in Sources */,
