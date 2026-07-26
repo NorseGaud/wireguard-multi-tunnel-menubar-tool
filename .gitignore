@@ -14,3 +14,4 @@ DerivedData/
 
 # Local git worktrees
 .worktrees/
+docs
