@@ -194,15 +194,29 @@ final class StealthPreferencesView: NSView {
     }
 
     private func updateEnabledStateForTools() {
-        controls.amneziaCheckbox.isEnabled = toolsStatus.amnezia
-        setEnabled(controls.amneziaFieldsStack, toolsStatus.amnezia && controls.amneziaCheckbox.state == .on)
+        // Allow enable only when tool installed; always allow uncheck when layer is on.
+        controls.amneziaCheckbox.isEnabled =
+            toolsStatus.amnezia || controls.amneziaCheckbox.state == .on
+        setEnabled(
+            controls.amneziaFieldsStack,
+            toolsStatus.amnezia && controls.amneziaCheckbox.state == .on
+        )
 
-        controls.udp2rawCheckbox.isEnabled = toolsStatus.udp2raw
-        setEnabled(controls.udp2rawFieldsStack, toolsStatus.udp2raw && controls.udp2rawCheckbox.state == .on)
+        controls.udp2rawCheckbox.isEnabled =
+            toolsStatus.udp2raw || controls.udp2rawCheckbox.state == .on
+        setEnabled(
+            controls.udp2rawFieldsStack,
+            toolsStatus.udp2raw && controls.udp2rawCheckbox.state == .on
+        )
 
-        controls.wstunnelCheckbox.isEnabled = toolsStatus.wstunnel
-        setEnabled(controls.wstunnelFieldsStack, toolsStatus.wstunnel && controls.wstunnelCheckbox.state == .on)
-        controls.wsTLSSkipCheckbox.isEnabled = toolsStatus.wstunnel && controls.wstunnelCheckbox.state == .on
+        controls.wstunnelCheckbox.isEnabled =
+            toolsStatus.wstunnel || controls.wstunnelCheckbox.state == .on
+        setEnabled(
+            controls.wstunnelFieldsStack,
+            toolsStatus.wstunnel && controls.wstunnelCheckbox.state == .on
+        )
+        controls.wsTLSSkipCheckbox.isEnabled =
+            toolsStatus.wstunnel && controls.wstunnelCheckbox.state == .on
     }
 
     private func setEnabled(_ view: NSView, _ enabled: Bool) {
