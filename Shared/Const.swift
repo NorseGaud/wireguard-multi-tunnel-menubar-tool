@@ -5,6 +5,8 @@ import Foundation
 let runPath = "/var/run/wireguard"
 /// Symlinks with wg-quick-compatible names for tunnels whose config basename exceeds 15 characters
 let wgQuickAliasPath = "/var/run/wireguard-multitunnel"
+/// Ephemeral stealth configs, wrapper state files, and related runtime artifacts
+let stealthRunPath = "/var/run/wireguard-multitunnel/stealth"
 
 let wireguardInstallURL =
     "https://www.wireguard.com/install/" +
