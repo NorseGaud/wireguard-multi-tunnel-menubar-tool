@@ -10,3 +10,5 @@ excluded:
   # ignore vendor files, will be removed in the future
   - WireGuardMultiTunnel/INIParser.swift
   - WireGuardMultiTunnelHelper/SKQueue.swift
+  # local git worktrees (nested copies would otherwise be linted)
+  - .worktrees

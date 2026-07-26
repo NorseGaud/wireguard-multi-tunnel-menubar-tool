@@ -19,8 +19,8 @@ endif
 
 git_sha=$(shell git rev-parse --short HEAD)
 
-swift_sources=$(shell find * -name "*.swift"|grep -vE 'SKQueue|INIParse')
-other_sources=$(shell find * -name "*.plist") WireGuardMultiTunnel.xcodeproj/project.pbxproj
+swift_sources=$(shell find * -name "*.swift"|grep -vE 'SKQueue|INIParse|\.worktrees/')
+other_sources=$(shell find * -name "*.plist"|grep -vE '\.worktrees/') WireGuardMultiTunnel.xcodeproj/project.pbxproj
 sources=${swift_sources} ${other_sources} VERSION
 
 version_file=VERSION
