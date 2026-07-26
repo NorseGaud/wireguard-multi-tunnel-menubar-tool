@@ -76,6 +76,9 @@
 		A101000021CD90000001E715 /* StealthArgSecurity.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E711 /* StealthArgSecurity.swift */; };
 		A101000021CD90000001E722 /* StealthProfileTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E721 /* StealthProfileTests.swift */; };
 		A101000021CD90000001E732 /* StealthArgSecurityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E731 /* StealthArgSecurityTests.swift */; };
+		A101000021CD90000001E742 /* StealthSettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E741 /* StealthSettingsStore.swift */; };
+		A101000021CD90000001E743 /* StealthSettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E741 /* StealthSettingsStore.swift */; };
+		A101000021CD90000001E752 /* StealthSettingsStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E751 /* StealthSettingsStoreTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -168,6 +171,8 @@
 		A101000021CD90000001E711 /* StealthArgSecurity.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = StealthArgSecurity.swift; path = Shared/StealthArgSecurity.swift; sourceTree = "<group>"; };
 		A101000021CD90000001E721 /* StealthProfileTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StealthProfileTests.swift; sourceTree = "<group>"; };
 		A101000021CD90000001E731 /* StealthArgSecurityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StealthArgSecurityTests.swift; sourceTree = "<group>"; };
+		A101000021CD90000001E741 /* StealthSettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StealthSettingsStore.swift; sourceTree = "<group>"; };
+		A101000021CD90000001E751 /* StealthSettingsStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StealthSettingsStoreTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -239,6 +244,7 @@
 				0401E2AE21CD91E00030E707 /* HelperTests.swift */,
 				A101000021CD90000001E721 /* StealthProfileTests.swift */,
 				A101000021CD90000001E731 /* StealthArgSecurityTests.swift */,
+				A101000021CD90000001E751 /* StealthSettingsStoreTests.swift */,
 				04B2BD4521BDA69000CCAE2F /* Info.plist */,
 				04C5BE2921E5266A009EE19A /* Shared.swift */,
 			);
@@ -278,6 +284,7 @@
 				0401E2AB21CD853B0030E707 /* Menu.swift */,
 				0457E2FA21DFF1F600DD17A2 /* PreferencesController.swift */,
 				0457E2FB21DFF1F600DD17A2 /* PreferencesController.xib */,
+				A101000021CD90000001E741 /* StealthSettingsStore.swift */,
 				0401E29821C9913B0030E707 /* Tunnel.swift */,
 			);
 			path = WireGuardMultiTunnel;
@@ -553,6 +560,8 @@
 				04B2BD4421BDA69000CCAE2F /* AppTests.swift in Sources */,
 				A101000021CD90000001E722 /* StealthProfileTests.swift in Sources */,
 				A101000021CD90000001E732 /* StealthArgSecurityTests.swift in Sources */,
+				A101000021CD90000001E752 /* StealthSettingsStoreTests.swift in Sources */,
+				A101000021CD90000001E743 /* StealthSettingsStore.swift in Sources */,
 				0401E2AD21CD855F0030E707 /* Menu.swift in Sources */,
 				0401E29F21C993EF0030E707 /* AppProtocol.swift in Sources */,
 				0466E5B921C1AB5700113B45 /* Const.swift in Sources */,
@@ -583,6 +592,7 @@
 				A101000021CD90000001E712 /* StealthArgSecurity.swift in Sources */,
 				0401E29921C9913B0030E707 /* Tunnel.swift in Sources */,
 				0457E2FC21DFF1F600DD17A2 /* PreferencesController.swift in Sources */,
+				A101000021CD90000001E742 /* StealthSettingsStore.swift in Sources */,
 				0401E2AC21CD853B0030E707 /* Menu.swift in Sources */,
 				0401E29721C990FB0030E707 /* HelperXPC.swift in Sources */,
 				0456DA6521BB0C9000701CCE /* HelperProtocol.swift in Sources */,
