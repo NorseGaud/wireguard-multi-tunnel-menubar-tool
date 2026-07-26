@@ -11,3 +11,6 @@ WireGuardMultiTunnel.app
 WireGuardMultiTunnel-*.zip
 build/
 DerivedData/
+
+# Local git worktrees
+.worktrees/
