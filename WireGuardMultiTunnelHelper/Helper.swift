@@ -154,8 +154,6 @@ class Helper: NSObject, HelperProtocol, SKQueueDelegate {
     // XPC: tunnel up/down with optional stealth profile JSON (empty = plain WireGuard)
     func setTunnel(tunnelName: String, enable: Bool, stealthProfileJSON: String, reply:
         @escaping (_ success: Bool, _ errorMessage: String) -> Void) {
-        let state = enable ? "up" : "down"
-
         if !WireGuard.validateTunnelName(tunnelName: tunnelName) {
             NSLog("Invalid tunnel name '\(tunnelName)'")
             reply(false, "Invalid tunnel name '\(tunnelName)'")
@@ -171,26 +169,19 @@ class Helper: NSObject, HelperProtocol, SKQueueDelegate {
             return
         }
 
-        if profile.hasAnyLayerEnabled {
-            if let missing = missingStealthToolMessage(for: profile) {
-                reply(false, missing)
-                return
-            }
-            // Full orchestrator bringUp/bringDown is Task 7.
-            reply(false, "Stealth orchestration not fully wired")
-            return
+        let (success, errorMessage): (Bool, String)
+        if !enable {
+            (success, errorMessage) = bringTunnelDown(tunnelName: tunnelName, profile: profile)
+        } else if profile.hasAnyLayerEnabled {
+            (success, errorMessage) = bringStealthTunnelUp(tunnelName: tunnelName, profile: profile)
+        } else {
+            NSLog("Set tunnel \(tunnelName) up")
+            (success, errorMessage) = wireguard.setTunnel(tunnelName: tunnelName, enable: true)
         }
 
-        NSLog("Set tunnel \(tunnelName) \(state)")
-        let (success, errorMessage) = wireguard.setTunnel(tunnelName: tunnelName, enable: enable)
         reply(success, errorMessage)
-
-        // Because /var/run/wireguard might not exist and can be created after upping the first tunnel
-        // run the registration of watchdirectories again and force trigger a state update to the app.
-        // This is 'cheaper' than registering a watcher for the parent directory /var/run/.
+        // /var/run/wireguard may be created on first up; re-register watchers and notify App.
         registerWireGuardStateWatch()
-
-        // Notify the app to have it pull in changes.
         appUpdateState()
     }
 
@@ -203,40 +194,6 @@ class Helper: NSObject, HelperProtocol, SKQueueDelegate {
             return
         }
         reply(json)
-    }
-
-    private func currentStealthToolsStatus() -> StealthToolsStatus {
-        let awgQuick = brewBinExecutable("awg-quick") != nil
-        let amneziaGo = brewBinExecutable("amneziawg-go") != nil
-        return StealthToolsStatus(
-            amnezia: awgQuick && amneziaGo,
-            udp2raw: brewBinExecutable("udp2raw") != nil,
-            wstunnel: brewBinExecutable("wstunnel") != nil
-        )
-    }
-
-    private func brewBinExecutable(_ basename: String) -> String? {
-        PathSecurity.validateExecutableBinaryPath(
-            "\(brewPrefix)/bin/\(basename)",
-            expectedBasename: basename
-        )
-    }
-
-    private func missingStealthToolMessage(for profile: StealthProfile) -> String? {
-        let status = currentStealthToolsStatus()
-        if profile.amnezia.enabled, !status.amnezia {
-            if brewBinExecutable("awg-quick") == nil {
-                return "awg-quick not installed"
-            }
-            return "amneziawg-go not installed"
-        }
-        if profile.wstunnel.enabled, !status.wstunnel {
-            return "wstunnel not installed"
-        }
-        if profile.udp2raw.enabled, !status.udp2raw {
-            return "udp2raw not installed"
-        }
-        return nil
     }
 
     // XPC: allow App to query version of helper to allow updating when a new version is available
@@ -264,7 +221,7 @@ class Helper: NSObject, HelperProtocol, SKQueueDelegate {
 
     func shutdown() {
         NSLog("Going to shut down")
-        wireguard.shutdownConnectedTunnels()
+        shutdownConnectedTunnelsClearingStealth()
         // Dispatch the shutdown of the runloop to at least 10 seconds after starting the application.
         // This will shutdown immidiately if the deadline already passed.
         shutdownTask = DispatchWorkItem {
@@ -281,6 +238,160 @@ class Helper: NSObject, HelperProtocol, SKQueueDelegate {
             NSLog("Aborting shutdown")
             shutdownTask.cancel()
             self.shutdownTask = nil
+        }
+    }
+}
+
+private extension Helper {
+    func currentStealthToolsStatus() -> StealthToolsStatus {
+        let awgQuick = brewBinExecutable("awg-quick") != nil
+        let amneziaGo = brewBinExecutable("amneziawg-go") != nil
+        return StealthToolsStatus(
+            amnezia: awgQuick && amneziaGo,
+            udp2raw: brewBinExecutable("udp2raw") != nil,
+            wstunnel: brewBinExecutable("wstunnel") != nil
+        )
+    }
+
+    func brewBinExecutable(_ basename: String) -> String? {
+        PathSecurity.validateExecutableBinaryPath(
+            "\(brewPrefix)/bin/\(basename)",
+            expectedBasename: basename
+        )
+    }
+
+    func missingStealthToolMessage(for profile: StealthProfile) -> String? {
+        let status = currentStealthToolsStatus()
+        if profile.amnezia.enabled, !status.amnezia {
+            if brewBinExecutable("awg-quick") == nil {
+                return "awg-quick not installed"
+            }
+            return "amneziawg-go not installed"
+        }
+        if profile.wstunnel.enabled, !status.wstunnel {
+            return "wstunnel not installed"
+        }
+        if profile.udp2raw.enabled, !status.udp2raw {
+            return "udp2raw not installed"
+        }
+        return nil
+    }
+
+    func resolveStealthToolPaths() -> StealthToolPaths {
+        StealthToolPaths(
+            awgQuick: brewBinExecutable("awg-quick"),
+            amneziaGo: brewBinExecutable("amneziawg-go"),
+            udp2raw: brewBinExecutable("udp2raw"),
+            wstunnel: brewBinExecutable("wstunnel")
+        )
+    }
+
+    func makeStealthOrchestrator(toolPaths: StealthToolPaths? = nil) -> StealthOrchestrator {
+        StealthOrchestrator(
+            runner: RealStealthProcessRunner.shared,
+            toolPaths: toolPaths ?? resolveStealthToolPaths(),
+            runDirectory: stealthRunPath,
+            brewPrefix: brewPrefix
+        )
+    }
+
+    func quickBinPath(useAmnezia: Bool, toolPaths: StealthToolPaths) -> String {
+        if useAmnezia, let awgQuick = toolPaths.awgQuick {
+            return awgQuick
+        }
+        return wgquickBinPath
+    }
+
+    func bringStealthTunnelUp(tunnelName: String, profile: StealthProfile) -> (Bool, String) {
+        if let missing = missingStealthToolMessage(for: profile) {
+            return (false, missing)
+        }
+        guard let sourceConfigPath = wireguard.configFilePath(for: tunnelName) else {
+            return (false, "Could not find configuration file for tunnel '\(tunnelName)'")
+        }
+
+        let toolPaths = resolveStealthToolPaths()
+        let useAmnezia = profile.amnezia.enabled
+        let quickBin = quickBinPath(useAmnezia: useAmnezia, toolPaths: toolPaths)
+        let orchestrator = makeStealthOrchestrator(toolPaths: toolPaths)
+        let aliasName = WireGuard.wgQuickInterfaceName(for: tunnelName)
+
+        NSLog("Set stealth tunnel \(tunnelName) up")
+        return orchestrator.bringUp(
+            tunnelName: tunnelName,
+            sourceConfigPath: sourceConfigPath,
+            profile: profile,
+            useAmnezia: useAmnezia,
+            runWgQuick: { ephemeralPath in
+                self.wireguard.wgQuick(["up", ephemeralPath], quickBinPath: quickBin)
+            },
+            runWgQuickDown: {
+                self.downEphemeralInterface(aliasName: aliasName, quickBinPath: quickBin)
+            }
+        )
+    }
+
+    func bringTunnelDown(tunnelName: String, profile: StealthProfile) -> (Bool, String) {
+        let orchestrator = makeStealthOrchestrator()
+        guard let state = orchestrator.runtimeState(for: tunnelName) else {
+            NSLog("Set tunnel \(tunnelName) down")
+            return wireguard.setTunnel(tunnelName: tunnelName, enable: false)
+        }
+
+        let toolPaths = resolveStealthToolPaths()
+        let useAmnezia = state.useAmnezia ?? profile.amnezia.enabled
+        let quickBin = quickBinPath(useAmnezia: useAmnezia, toolPaths: toolPaths)
+        let aliasName = state.aliasName
+
+        NSLog("Set stealth tunnel \(tunnelName) down")
+        let (success, errorMessage) = orchestrator.bringDown(tunnelName: tunnelName) {
+            self.downEphemeralInterface(aliasName: aliasName, quickBinPath: quickBin)
+        }
+
+        if !wireguard.interfaceName(tunnelName).isEmpty {
+            _ = wireguard.setTunnel(tunnelName: tunnelName, enable: false, quickBinPath: quickBin)
+        }
+        return (success, errorMessage)
+    }
+
+    func downEphemeralInterface(aliasName: String, quickBinPath: String) -> (Bool, String) {
+        let ephemeralPath = "\(stealthRunPath)/\(aliasName).conf"
+        if FileManager.default.fileExists(atPath: ephemeralPath) {
+            return wireguard.wgQuick(["down", ephemeralPath], quickBinPath: quickBinPath)
+        }
+        return wireguard.wgQuick(["down", aliasName], quickBinPath: quickBinPath)
+    }
+
+    func shutdownConnectedTunnelsClearingStealth() {
+        let orchestrator = makeStealthOrchestrator()
+        wireguard.shutdownConnectedTunnels { tunnelName in
+            guard let state = orchestrator.runtimeState(for: tunnelName) else { return nil }
+            NSLog("Shutting down stealth tunnel '\(tunnelName)' on app quit")
+            let toolPaths = self.resolveStealthToolPaths()
+            let useAmnezia = state.useAmnezia ?? false
+            let quickBin = self.quickBinPath(useAmnezia: useAmnezia, toolPaths: toolPaths)
+            let aliasName = state.aliasName
+            return orchestrator.bringDown(tunnelName: tunnelName) {
+                self.downEphemeralInterface(aliasName: aliasName, quickBinPath: quickBin)
+            }
+        }
+        clearOrphanedStealthStacks(orchestrator: orchestrator)
+    }
+
+    func clearOrphanedStealthStacks(orchestrator: StealthOrchestrator) {
+        guard let contents = try? FileManager.default.contentsOfDirectory(atPath: stealthRunPath) else { return }
+        for fileName in contents where fileName.hasSuffix(".json") {
+            let tunnelName = String(fileName.dropLast(5))
+            guard WireGuard.validateTunnelName(tunnelName: tunnelName),
+                  let state = orchestrator.runtimeState(for: tunnelName)
+            else { continue }
+            NSLog("Clearing orphaned stealth stack '\(tunnelName)' on app quit")
+            let toolPaths = resolveStealthToolPaths()
+            let useAmnezia = state.useAmnezia ?? false
+            let quickBin = quickBinPath(useAmnezia: useAmnezia, toolPaths: toolPaths)
+            _ = orchestrator.bringDown(tunnelName: tunnelName) {
+                self.downEphemeralInterface(aliasName: state.aliasName, quickBinPath: quickBin)
+            }
         }
     }
 }

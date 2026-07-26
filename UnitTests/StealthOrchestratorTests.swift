@@ -352,3 +352,42 @@ class StealthOrchestratorTests: XCTestCase {
         XCTAssertEqual(runner.stopped.count, 1)
     }
 }
+
+final class StealthOrchestratorMissingBinaryTests: XCTestCase {
+    func testBringUpFailsWhenWsTunnelMissingBinary() throws {
+        let runner = MockStealthRunner()
+        let tmp = try StealthOrchestratorTestFixtures.makeTempDir()
+        defer { try? FileManager.default.removeItem(at: tmp) }
+        let configURL = try StealthOrchestratorTestFixtures.writeConfig(in: tmp)
+        var profile = StealthProfile()
+        profile.wstunnel.enabled = true
+        profile.wstunnel.serverURL = "wss://example.com/ws"
+        let orch = StealthOrchestratorTestFixtures.makeOrchestrator(
+            runner: runner,
+            runDirectory: tmp.appendingPathComponent("run").path,
+            toolPaths: StealthToolPaths(
+                awgQuick: nil,
+                amneziaGo: nil,
+                udp2raw: nil,
+                wstunnel: nil
+            )
+        )
+
+        var wgCalled = false
+        let (succeeded, message) = orch.bringUp(
+            tunnelName: "home",
+            sourceConfigPath: configURL.path,
+            profile: profile,
+            useAmnezia: false,
+            runWgQuick: { _ in
+                wgCalled = true
+                return (true, "")
+            }
+        )
+        XCTAssertFalse(succeeded)
+        XCTAssertFalse(wgCalled)
+        XCTAssertTrue(message.lowercased().contains("wstunnel"))
+        XCTAssertTrue(message.lowercased().contains("not installed"))
+        XCTAssertTrue(runner.started.isEmpty)
+    }
+}

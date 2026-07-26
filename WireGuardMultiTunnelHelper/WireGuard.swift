@@ -120,8 +120,16 @@ struct WireGuard {
     }
 
     /// Bring down every tunnel that is currently connected.
-    func shutdownConnectedTunnels() {
+    /// - Parameter stealthBringDown: Optional per-tunnel stealth teardown. Return non-nil when the
+    ///   tunnel had stealth state and was handled (skip plain setTunnel).
+    func shutdownConnectedTunnels(stealthBringDown: ((String) -> (Bool, String)?)? = nil) {
         for tunnelName in tunnelNames() {
+            if let stealthBringDown, let result = stealthBringDown(tunnelName) {
+                if !result.0 {
+                    NSLog("Failed to shut down stealth tunnel '\(tunnelName)' on quit: \(result.1)")
+                }
+                continue
+            }
             guard !interfaceName(tunnelName).isEmpty else { continue }
             NSLog("Shutting down tunnel '\(tunnelName)' on app quit")
             let (success, errorMessage) = setTunnel(tunnelName: tunnelName, enable: false)
@@ -132,11 +140,15 @@ struct WireGuard {
     }
 
     func setTunnel(tunnelName: String, enable: Bool) -> (Bool, String) {
+        setTunnel(tunnelName: tunnelName, enable: enable, quickBinPath: wgquickBinPath)
+    }
+
+    func setTunnel(tunnelName: String, enable: Bool, quickBinPath: String) -> (Bool, String) {
         let state = enable ? "up" : "down"
         let wgQuickName = WireGuard.wgQuickInterfaceName(for: tunnelName)
 
         if wgQuickName == tunnelName {
-            return wgQuick([state, tunnelName])
+            return wgQuick([state, tunnelName], quickBinPath: quickBinPath)
         }
 
         guard let configFile = configFilePath(for: tunnelName) else {
@@ -145,7 +157,7 @@ struct WireGuard {
 
         do {
             let aliasConfigFile = try createConfigAlias(configFile: configFile, wgQuickName: wgQuickName)
-            let result = wgQuick([state, aliasConfigFile])
+            let result = wgQuick([state, aliasConfigFile], quickBinPath: quickBinPath)
             if !enable, result.0 {
                 try? FileManager.default.removeItem(atPath: aliasConfigFile)
             }
@@ -183,14 +195,18 @@ struct WireGuard {
     }
 
     func wgQuick(_ arguments: [String]) -> (Bool, String) {
+        wgQuick(arguments, quickBinPath: wgquickBinPath)
+    }
+
+    func wgQuick(_ arguments: [String], quickBinPath: String) -> (Bool, String) {
         // prevent passing an invalid path or else task.launch will result in a fatal NSInvalidArgumentException
-        guard FileManager.default.fileExists(atPath: wgquickBinPath) else {
-            NSLog("Path '\(wgquickBinPath)' for 'wg-quick' binary is invalid!")
-            return (false, "Path '\(wgquickBinPath)' for 'wg-quick' binary is invalid!")
+        guard FileManager.default.fileExists(atPath: quickBinPath) else {
+            NSLog("Path '\(quickBinPath)' for quick binary is invalid!")
+            return (false, "Path '\(quickBinPath)' for quick binary is invalid!")
         }
 
         let task = Process()
-        task.launchPath = wgquickBinPath
+        task.launchPath = quickBinPath
         task.arguments = arguments
         // Add brew bin to path as wg-quick requires Bash 4 instead of macOS provided Bash 3
         task.environment = ["PATH": "\(brewPrefix)/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"]
@@ -210,7 +226,8 @@ struct WireGuard {
             let truncatedMessage = logMessage.count > 200
                 ? String(logMessage.prefix(200)) + "..."
                 : logMessage
-            let commandSummary = "wg-quick \(arguments.joined(separator: " "))"
+            let binName = URL(fileURLWithPath: quickBinPath).lastPathComponent
+            let commandSummary = "\(binName) \(arguments.joined(separator: " "))"
             NSLog("\(commandSummary) failed (exit \(task.terminationStatus)): \(truncatedMessage)")
         }
 

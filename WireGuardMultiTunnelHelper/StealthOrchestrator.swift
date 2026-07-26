@@ -23,6 +23,8 @@ final class StealthOrchestrator {
         var wstunnelLocalPort: UInt16?
         var udp2rawLocalPort: UInt16?
         var wgLocalPort: UInt16?
+        /// Whether bring-up used awg-quick (Amnezia). Absent in older state files ⇒ nil/false.
+        var useAmnezia: Bool?
     }
 
     private let runner: StealthProcessRunning
@@ -77,7 +79,8 @@ final class StealthOrchestrator {
         var startedPids: [Int32] = []
         var state = TunnelState(
             tunnelName: tunnelName,
-            aliasName: WireGuard.wgQuickInterfaceName(for: tunnelName)
+            aliasName: WireGuard.wgQuickInterfaceName(for: tunnelName),
+            useAmnezia: useAmnezia || profile.amnezia.enabled
         )
 
         do {
@@ -112,6 +115,14 @@ final class StealthOrchestrator {
             rollback(startedPids: startedPids.reversed(), state: state)
             return (false, "Stealth bring-up failed: \(error.localizedDescription)")
         }
+    }
+
+    func hasRuntimeState(for tunnelName: String) -> Bool {
+        store.load(tunnelName: tunnelName) != nil
+    }
+
+    func runtimeState(for tunnelName: String) -> TunnelState? {
+        store.load(tunnelName: tunnelName)
     }
 
     func bringDown(
