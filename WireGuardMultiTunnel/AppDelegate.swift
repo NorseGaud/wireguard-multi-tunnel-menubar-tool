@@ -29,6 +29,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSUserNotifi
     let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
     @IBOutlet var menu: NSMenu!
 
+    let stealthStore = StealthSettingsStore(directoryURL: StealthSettingsStore.defaultDirectoryURL)
+
     var privilegedHelper: HelperXPC?
 
     /// Tunnel name → target enabled state while wg-quick is running.
@@ -197,17 +199,24 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSUserNotifi
                 NSLog("XPCService error: \(error)")
             } as? HelperProtocol
 
-            xpcService?.setTunnel(tunnelName: tunnelName, enable: enabling, reply: { success, errorMessage in
-                NSLog("setTunnel \(tunnelName), to: \(enabling), success: \(success), error: \(errorMessage)")
-                DispatchQueue.main.async {
-                    if !success {
-                        self.pendingTunnelOperations.removeValue(forKey: tunnelName)
-                        self.refreshStatusBarAppearance()
-                        self.menu.update()
-                        self.notifyError(errorMessage)
+            let profile = stealthStore.profile(for: tunnelName)
+            let json = (try? profile.jsonString()) ?? ""
+            xpcService?.setTunnel(
+                tunnelName: tunnelName,
+                enable: enabling,
+                stealthProfileJSON: json,
+                reply: { success, errorMessage in
+                    NSLog("setTunnel \(tunnelName), to: \(enabling), success: \(success), error: \(errorMessage)")
+                    DispatchQueue.main.async {
+                        if !success {
+                            self.pendingTunnelOperations.removeValue(forKey: tunnelName)
+                            self.refreshStatusBarAppearance()
+                            self.menu.update()
+                            self.notifyError(errorMessage)
+                        }
                     }
                 }
-            })
+            )
         } else {
             NSLog("Sender not convertable to String: \(sender.representedObject.debugDescription)")
         }
