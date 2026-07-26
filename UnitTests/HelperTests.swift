@@ -62,4 +62,13 @@ class HelperTests: XCTestCase {
     func testValidateBinaryPathAcceptsExistingBinary() {
         XCTAssertEqual(PathSecurity.validateBinaryPath("/bin/sh", expectedBasename: "sh"), "/bin/sh")
     }
+
+    func testStealthToolsStatusReturnsJSON() {
+        let exp = expectation(description: "status")
+        Helper().stealthToolsStatus { json in
+            XCTAssertNotNil(try? JSONDecoder().decode(StealthToolsStatus.self, from: Data(json.utf8)))
+            exp.fulfill()
+        }
+        wait(for: [exp], timeout: 2)
+    }
 }

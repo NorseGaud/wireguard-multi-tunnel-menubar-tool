@@ -148,11 +148,36 @@ class Helper: NSObject, HelperProtocol, SKQueueDelegate {
     // XPC: called by App to have Helper change the state of a tunnel to up or down
     func setTunnel(tunnelName: String, enable: Bool, reply:
         @escaping (_ success: Bool, _ errorMessage: String) -> Void) {
+        setTunnel(tunnelName: tunnelName, enable: enable, stealthProfileJSON: "", reply: reply)
+    }
+
+    // XPC: tunnel up/down with optional stealth profile JSON (empty = plain WireGuard)
+    func setTunnel(tunnelName: String, enable: Bool, stealthProfileJSON: String, reply:
+        @escaping (_ success: Bool, _ errorMessage: String) -> Void) {
         let state = enable ? "up" : "down"
 
         if !WireGuard.validateTunnelName(tunnelName: tunnelName) {
             NSLog("Invalid tunnel name '\(tunnelName)'")
             reply(false, "Invalid tunnel name '\(tunnelName)'")
+            return
+        }
+
+        let profile: StealthProfile
+        do {
+            profile = try StealthProfile.parse(jsonString: stealthProfileJSON)
+            try profile.validate()
+        } catch {
+            reply(false, "Invalid stealth profile: \(error)")
+            return
+        }
+
+        if profile.hasAnyLayerEnabled {
+            if let missing = missingStealthToolMessage(for: profile) {
+                reply(false, missing)
+                return
+            }
+            // Full orchestrator bringUp/bringDown is Task 7.
+            reply(false, "Stealth orchestration not fully wired")
             return
         }
 
@@ -167,6 +192,51 @@ class Helper: NSObject, HelperProtocol, SKQueueDelegate {
 
         // Notify the app to have it pull in changes.
         appUpdateState()
+    }
+
+    func stealthToolsStatus(_ reply: @escaping (String) -> Void) {
+        let status = currentStealthToolsStatus()
+        guard let data = try? JSONEncoder().encode(status),
+              let json = String(data: data, encoding: .utf8)
+        else {
+            reply("{\"amnezia\":false,\"udp2raw\":false,\"wstunnel\":false}")
+            return
+        }
+        reply(json)
+    }
+
+    private func currentStealthToolsStatus() -> StealthToolsStatus {
+        let awgQuick = brewBinExecutable("awg-quick") != nil
+        let amneziaGo = brewBinExecutable("amneziawg-go") != nil
+        return StealthToolsStatus(
+            amnezia: awgQuick && amneziaGo,
+            udp2raw: brewBinExecutable("udp2raw") != nil,
+            wstunnel: brewBinExecutable("wstunnel") != nil
+        )
+    }
+
+    private func brewBinExecutable(_ basename: String) -> String? {
+        PathSecurity.validateExecutableBinaryPath(
+            "\(brewPrefix)/bin/\(basename)",
+            expectedBasename: basename
+        )
+    }
+
+    private func missingStealthToolMessage(for profile: StealthProfile) -> String? {
+        let status = currentStealthToolsStatus()
+        if profile.amnezia.enabled, !status.amnezia {
+            if brewBinExecutable("awg-quick") == nil {
+                return "awg-quick not installed"
+            }
+            return "amneziawg-go not installed"
+        }
+        if profile.wstunnel.enabled, !status.wstunnel {
+            return "wstunnel not installed"
+        }
+        if profile.udp2raw.enabled, !status.udp2raw {
+            return "udp2raw not installed"
+        }
+        return nil
     }
 
     // XPC: allow App to query version of helper to allow updating when a new version is available

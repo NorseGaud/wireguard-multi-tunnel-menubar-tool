@@ -12,6 +12,9 @@ enum HelperConstants {
 protocol HelperProtocol {
     func getTunnels(reply: @escaping (TunnelInfo) -> Void)
     func setTunnel(tunnelName: String, enable: Bool, reply: @escaping (_ success: Bool, _ errorMessage: String) -> Void)
+    func setTunnel(tunnelName: String, enable: Bool, stealthProfileJSON: String,
+                   reply: @escaping (_ success: Bool, _ errorMessage: String) -> Void)
     func getVersion(_ reply: @escaping (String) -> Void)
     func wireguardInstalled(_ reply: @escaping (Bool) -> Void)
+    func stealthToolsStatus(_ reply: @escaping (String) -> Void)
 }
