@@ -538,6 +538,7 @@
 		};
 		0466E5C221C2C97500113B45 /* Swiftlint */ = {
 			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
@@ -552,7 +553,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "export PATH=~/.brew/bin:$PATH\n\nif which swiftlint >/dev/null && which swiftformat >/dev/null; then\n    # don't let swiftlint warn for violations that would be fixed by swiftformat\n    /usr/bin/find * -name \"*.swift\"| grep -vE 'SKQueue|INIParse' | xargs -I% /bin/sh -o pipefail -c \"swiftformat < % | swiftlint --lenient --use-stdin | sed 's,\\<nopath\\>,$PWD/%,'\"\nelse\n    echo \"warning: SwiftLint or Swiftformat not installed!\"\nfi\n";
+			shellScript = "export PATH=\"/opt/homebrew/bin:/usr/local/bin:${HOME}/.brew/bin:${PATH}\"\n\n# Strict linting is enforced by `make check` before CI xcodebuild.\n# Keep this phase for local Xcode issue-navigator feedback only.\nif [ \"${CI}\" = \"true\" ]; then\n    exit 0\nfi\n\nif ! command -v swiftlint >/dev/null || ! command -v swiftformat >/dev/null; then\n    echo \"warning: SwiftLint or SwiftFormat not installed; skipping\"\n    exit 0\nfi\n\n# Avoid `xargs`+`pipefail`: any SIGPIPE/tool blip was failing the whole Xcode build.\n# Format via stdin so SwiftLint does not warn about issues SwiftFormat would fix.\n/usr/bin/find . \\\n    \\( -path './.worktrees' -o -path './DerivedData' -o -path './build' \\) -prune -o \\\n    -name '*.swift' ! -name 'SKQueue.swift' ! -name 'INIParser.swift' -print \\\n| while IFS= read -r file; do\n    rel=${file#./}\n    swiftformat < \"$rel\" 2>/dev/null | swiftlint --lenient --use-stdin | sed \"s,<nopath>,${PWD}/${rel},\" || true\ndone\n\nexit 0\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
