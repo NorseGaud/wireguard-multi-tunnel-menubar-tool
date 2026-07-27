@@ -74,15 +74,15 @@ Behavior:
 
 ### Release builds vs self-signed builds
 
-Published releases are **not** signed with a notarized Developer ID in the maintainer's current workflow; users may need to allow the app via System Settings (Gatekeeper). That is separate from the **privileged-helper trust model**: `SMJobBless` and XPC validation expect the app and helper to be signed with identities that satisfy the plist requirements above. Ad-hoc or mismatched signing can cause helper install or XPC connection to fail even after Gatekeeper allows the app to open.
+The maintainer `make dist` path Developer ID–signs the app and helper (hardened runtime + timestamp), notarizes the versioned DMG with `notarytool` (keychain profile, default `wireguard-multitunnel`), and staples the ticket. Team OU remains **`4JD8RUCQ2W`** so it matches the SMJobBless / XPC requirements above. CI builds stay unsigned (`CODE_SIGNING_ALLOWED=NO`) and are only suitable for unit tests, not for installing the helper on a real system.
+
+That Gatekeeper-friendly release signing is separate from the **privileged-helper trust model**: `SMJobBless` and XPC validation still expect the app and helper to satisfy the plist requirements above. Ad-hoc or mismatched signing can cause helper install or XPC connection to fail even after Gatekeeper allows the app to open.
 
 To ship or run with your own team ID, sign **both** targets with the same Developer ID Application certificate and update the OU in:
 
 - `WireGuardMultiTunnel/Info.plist` (`SMPrivilegedExecutables`)
 - `WireGuardMultiTunnelHelper/Info.plist` (`SMAuthorizedClients`)
 - `Shared/SecurityValidation.swift` (`authorizedAppRequirement`, `authorizedHelperRequirement`)
-
-CI builds with `CODE_SIGNING_ALLOWED=NO`; that disables this trust chain and is only suitable for unit tests, not for installing the helper on a real system.
 
 ## Path hardening
 

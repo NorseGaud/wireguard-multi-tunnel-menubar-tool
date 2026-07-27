@@ -25,10 +25,8 @@ This is a macOS statusbar item (aka menubar icon) that wraps wg-quick. It allows
 
 - Follow the instruction to [install WireGuard for macOS](https://www.wireguard.com/install/)
 - Create a tunnel configuration file (eg: `/opt/homebrew/etc/wireguard/utun1.conf`)
-- Build the application yourself using the instructions below.
-- The next bit is needed because I don't have a Apple Developer account to properly sign the binary. If you don't like it consider building and signing the application yourself.
-  - Start the App and get a dialog indicating the app is not signed
-  - Go to: Preferences->Security & Privacy->General and click "Open Anyway"
+- Build the application yourself using the instructions below (local `make dist` signs and notarizes when Developer ID credentials are configured; see [Signing & notarization](#signing--notarization)).
+- If you run an unsigned build: start the app, then allow it under System Settings → Privacy & Security (“Open Anyway”).
 
 #### Non-default Homebrew or `wg-quick` location
 
@@ -156,6 +154,19 @@ To build a distributable `.dmg` and install to `/Applications` (unit tests only,
 
 Set the release version in the root `VERSION` file (for example `2.0.0`). `make` reads that value for distributable names and syncs `CFBundleShortVersionString` in both app and helper `Info.plist` files before archiving. Each distributable build (`make`, `make dist`, `make app`, …) increments `CFBundleVersion` in both plists so the helper stays in sync with the app. The `.dmg` is named with that version and build number (for example `WireGuardMultiTunnel-2.0.0-132.dmg`). Override once with `make version=2.0.1 build_number=140 dist` (skips auto-increment). CI skips the bump.
 
+### Signing & notarization
+
+Local `make dist` (and `make` / `make all`) Developer ID–signs the app and privileged helper, notarizes the DMG, and staples the ticket. Prerequisites:
+
+1. **Developer ID Application** certificate for team `4JD8RUCQ2W` in your keychain
+2. One-time notary credentials profile (default name `wireguard-multitunnel`):
+
+```bash
+xcrun notarytool store-credentials wireguard-multitunnel
+```
+
+Overrides: `make dist NOTARY_PROFILE=other-name` or `CODESIGN_IDENTITY='Developer ID Application: …'`. CI builds stay unsigned (`CODE_SIGNING_ALLOWED=NO`).
+
 For a full release verification including integration tests:
 
     make test-all dist install
@@ -182,6 +193,7 @@ This software as a whole is licensed under GPL-3.0
 - Release versioning from root `VERSION` file (synced into app and helper plists on `make dist`)
 - macOS 12+ deployment target and updated Xcode / lint tooling (`AGENTS.md` for contributors)
 - Per-tunnel stealth / obfuscation (AmneziaWG, udp2raw, wstunnel) — Preferences → Stealth; see [Stealth / obfuscation](#stealth--obfuscation)
+- Developer ID signing and notarization for `make dist` (team OU must match `SMAuthorizedClients` / `SMPrivilegedExecutables`; see [SECURITY.md](SECURITY.md))
 
 ### Planned
 
@@ -196,5 +208,4 @@ This software as a whole is licensed under GPL-3.0
 - Launch WireGuardMultiTunnel at login
 - Bundle or ship WireGuard tools; reduce reliance on Homebrew/bash 4 and explore custom routing (e.g. exclude LAN from full-tunnel routes)
 - Broader Help menu (troubleshooting, links) beyond About and install instructions
-- Developer ID signing and notarization (team OU must match `SMAuthorizedClients` / `SMPrivilegedExecutables`; see [SECURITY.md](SECURITY.md))
 - In-app update checking

@@ -35,12 +35,27 @@ helper_info_plist=WireGuardMultiTunnelHelper/Info.plist
 info_plists=${app_info_plist} ${helper_info_plist}
 build_number_override=$(filter command environment,$(origin build_number))
 
-# Disable code signing in CI (no certificates on GitHub Actions runners)
+# Developer ID release signing (non-CI). CI has no certificates.
+CODESIGN_IDENTITY?=Developer ID Application: ONLYHUMN LLC (4JD8RUCQ2W)
+DEVELOPMENT_TEAM?=4JD8RUCQ2W
+NOTARY_PROFILE?=wireguard-multitunnel
+helper_launch_services=Contents/Library/LaunchServices/WireGuardMultiTunnelHelper
+
+# Tests use project signing (Apple Development). Archive gets Developer ID overrides.
 ifdef CI
   xcodebuild_flags=CODE_SIGNING_ALLOWED=NO
+  xcodebuild_archive_flags=$(xcodebuild_flags)
 else
   xcodebuild_flags=
+  xcodebuild_archive_flags=CODE_SIGN_IDENTITY="$(CODESIGN_IDENTITY)" DEVELOPMENT_TEAM=$(DEVELOPMENT_TEAM)
 endif
+
+# Shared shell fragment: sets $$build and $$dmg for the versioned disk image name
+define resolve_dmg
+build=$$(/usr/libexec/PlistBuddy -c 'Print CFBundleVersion' '${app_info_plist}'); \
+	test -n "$$build"; \
+	dmg="WireGuardMultiTunnel-${version}-$$build.dmg"
+endef
 
 # without argument make runs unit tests, builds a distributable image, and installs the app in /Applications
 .PHONY: all test test-all
@@ -144,21 +159,65 @@ build_dest=${archive}/Products/Applications
 dist=${tmp}/WireGuardMultiTunnel
 dmg_volume=WireGuardMultiTunnel
 install_stamp=${tmp}/.wireguard-multitunnel-installed
+dmg_stamp=${tmp}/.wireguard-multitunnel-dmg
+notarize_stamp=${tmp}/.wireguard-multitunnel-notarized
 
 # Create just the .app in the current working directory
 app: WireGuardMultiTunnel.app
 WireGuardMultiTunnel.app: ${build_dest}/WireGuardMultiTunnel.app
 	rm -rf "$@" && cp -r "${<}" "$@"
 
+# Requirement strings must stay in sync with Info.plist SM* keys and Shared/SecurityValidation.swift
+app_codesign_requirement=anchor apple generic and identifier "WireGuardMultiTunnel" and certificate leaf[subject.OU] = "4JD8RUCQ2W"
+helper_codesign_requirement=anchor apple generic and identifier "WireGuardMultiTunnelHelper" and certificate leaf[subject.OU] = "4JD8RUCQ2W"
+
+# Deep-sign helper then app (SMJobBless order) with hardened runtime + timestamp
+.PHONY: sign
+sign: ${build_dest}/WireGuardMultiTunnel.app
+ifdef CI
+	@echo 'CI: skipping codesign'
+else
+	@set -euo pipefail; \
+	app='${build_dest}/WireGuardMultiTunnel.app'; \
+	helper="$$app/${helper_launch_services}"; \
+	test -f "$$helper"; \
+	codesign --force --options runtime --timestamp --sign '${CODESIGN_IDENTITY}' "$$helper"; \
+	codesign --force --options runtime --timestamp --sign '${CODESIGN_IDENTITY}' "$$app"; \
+	codesign --verify --deep --strict --verbose=2 "$$app"; \
+	codesign -v -R '=${helper_codesign_requirement}' "$$helper"; \
+	codesign -v -R '=${app_codesign_requirement}' "$$app"
+endif
+
 # Create distributable .dmg in current working directory (version + CFBundleVersion)
-.PHONY: dist create-dmg
-dist: ${dist}/WireGuardMultiTunnel.app create-dmg
-create-dmg: ${dist}/WireGuardMultiTunnel.app
-	@build=$$(/usr/libexec/PlistBuddy -c 'Print CFBundleVersion' '${app_info_plist}'); \
-	test -n "$$build"; \
-	dmg="WireGuardMultiTunnel-${version}-$$build.dmg"; \
-	rm -f WireGuardMultiTunnel-${version}-*.dmg; \
-	hdiutil create -fs HFS+ "$$dmg" -srcfolder '${dist}' -ov
+.PHONY: dist create-dmg notarize
+dist: ${dmg_stamp}
+ifndef CI
+dist: ${notarize_stamp}
+endif
+
+${dmg_stamp}: ${dist}/WireGuardMultiTunnel.app
+	@set -euo pipefail; \
+	${resolve_dmg}; \
+	rm -f WireGuardMultiTunnel-${version}-*.dmg '${notarize_stamp}'; \
+	hdiutil create -fs HFS+ "$$dmg" -srcfolder '${dist}' -ov; \
+	touch '$@'
+
+create-dmg: ${dmg_stamp}
+
+${notarize_stamp}: ${dmg_stamp}
+ifdef CI
+	@echo 'CI: skipping notarize'; touch '$@'
+else
+	@set -euo pipefail; \
+	${resolve_dmg}; \
+	test -f "$$dmg"; \
+	xcrun notarytool submit "$$dmg" --keychain-profile '${NOTARY_PROFILE}' --wait; \
+	xcrun stapler staple "$$dmg"; \
+	xcrun stapler validate "$$dmg"; \
+	touch '$@'
+endif
+
+notarize: ${notarize_stamp}
 
 # Zipped distributable with current git commit sha
 zip: WireGuardMultiTunnel-${git_sha}.zip
@@ -168,24 +227,30 @@ WireGuardMultiTunnel-${git_sha}.zip: ${tmp}/WireGuardMultiTunnel-${git_sha}.app
 ${tmp}/WireGuardMultiTunnel-${git_sha}.app: ${build_dest}/WireGuardMultiTunnel.app
 	rm -rf "$@" && cp -r "${<}" "$@"
 
-# Generate contents for distributable .dmg
+# Generate contents for distributable .dmg (signed app when not CI)
 ${dist}/WireGuardMultiTunnel.app: ${build_dest}/WireGuardMultiTunnel.app Misc/Uninstall.sh
+ifndef CI
+${dist}/WireGuardMultiTunnel.app: sign
+endif
 	rm -rf "${@D}/"; mkdir -p "${@D}/"
 	ln -sf /Applications "${@D}/Applications"
 	cp Misc/Uninstall.sh "${@D}/Uninstall"
-	rm -rf "$@" && cp -r "$<" "$@"
+	rm -rf "$@" && cp -r "${build_dest}/WireGuardMultiTunnel.app" "$@"
 
 # Generate archive build (this excludes debug symbols (dSYM) which are in a release build)
 ${build_dest}/WireGuardMultiTunnel.app: bump-build-number ${sources} | icons ensure-xcpretty
-	xcodebuild -scheme WireGuardMultiTunnel -archivePath "${archive}" archive $(xcodebuild_flags) | $(xcpretty_cmd)
+	xcodebuild -scheme WireGuardMultiTunnel -archivePath "${archive}" archive $(xcodebuild_archive_flags) | $(xcpretty_cmd)
 
 # install and run the App in /Applications (via mounted .dmg; ditto avoids symlink/xattr cp failures)
 .PHONY: install
 install: $(install_stamp)
-$(install_stamp): create-dmg
-	@set -e; \
-	build=$$(/usr/libexec/PlistBuddy -c 'Print CFBundleVersion' '${app_info_plist}'); \
-	dmg="WireGuardMultiTunnel-${version}-$$build.dmg"; \
+ifdef CI
+$(install_stamp): ${dmg_stamp}
+else
+$(install_stamp): ${notarize_stamp}
+endif
+	@set -euo pipefail; \
+	${resolve_dmg}; \
 	volume="/Volumes/${dmg_volume}"; \
 	test -f "$$dmg"; \
 	osascript -e 'tell application "WireGuardMultiTunnel" to quit' 2>/dev/null || true; \
@@ -339,6 +404,8 @@ clean:
 		WireGuardMultiTunnel-*.zip \
 		${tmp}/WireGuardMultiTunnel-*.app \
 		${install_stamp} \
+		${dmg_stamp} \
+		${notarize_stamp} \
 		DerivedData/
 
 # cleanup most artifacts that could be generated by the Makefile
