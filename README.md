@@ -2,7 +2,7 @@
 
 Fork of [aequitas/macos-menubar-wireguard](https://github.com/aequitas/macos-menubar-wireguard).
 
-[![CI](https://github.com/NorseGaud/macos-menubar-wireguard/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/NorseGaud/macos-menubar-wireguard/actions/workflows/ci.yml)
+[![CI](https://github.com/NorseGaud/wireguard-multi-tunnel-menubar-tool/actions/workflows/ci.yml/badge.svg?branch=edge)](https://github.com/NorseGaud/wireguard-multi-tunnel-menubar-tool/actions/workflows/ci.yml)
 [![Maintainability](https://api.codeclimate.com/v1/badges/66efb09de55fafe897e0/maintainability)](https://codeclimate.com/github/aequitas/macos-menubar-wireguard/maintainability)
 
 ## Introduction
