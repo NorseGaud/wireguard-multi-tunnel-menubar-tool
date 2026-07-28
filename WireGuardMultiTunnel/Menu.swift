@@ -3,7 +3,7 @@
 import Cocoa
 
 enum MenuItemTypes: Int {
-    case none = 0, tunnel, tunnelplaceholder
+    case none = 0, tunnel, tunnelplaceholder, disableAll, disableAllSeparator
 }
 
 class TunnelDetailMenuItem: NSMenuItem {

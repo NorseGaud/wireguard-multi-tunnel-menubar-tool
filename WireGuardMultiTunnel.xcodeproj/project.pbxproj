@@ -100,6 +100,8 @@
 		A101000021CD90000001F403 /* MenuBuildOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001F401 /* MenuBuildOptions.swift */; };
 		A101000021CD90000001F412 /* AppDelegate+StealthMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001F411 /* AppDelegate+StealthMenu.swift */; };
 		A101000021CD90000001F413 /* AppDelegate+StealthMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001F411 /* AppDelegate+StealthMenu.swift */; };
+		A101000021CD90000001F422 /* DisableAllMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001F421 /* DisableAllMenu.swift */; };
+		A101000021CD90000001F423 /* DisableAllMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001F421 /* DisableAllMenu.swift */; };
 		A101000021CD90000001F203 /* TunnelMenuSwitchViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001F201 /* TunnelMenuSwitchViews.swift */; };
 		A101000021CD90000001F302 /* StealthCompanionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001F301 /* StealthCompanionTests.swift */; };
 		A101000021CD90000001E7F2 /* StealthClientArgvTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001E7F1 /* StealthClientArgvTests.swift */; };
@@ -208,6 +210,7 @@
 		A101000021CD90000001F201 /* TunnelMenuSwitchViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TunnelMenuSwitchViews.swift; sourceTree = "<group>"; };
 		A101000021CD90000001F401 /* MenuBuildOptions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBuildOptions.swift; sourceTree = "<group>"; };
 		A101000021CD90000001F411 /* AppDelegate+StealthMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+StealthMenu.swift"; sourceTree = "<group>"; };
+		A101000021CD90000001F421 /* DisableAllMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisableAllMenu.swift; sourceTree = "<group>"; };
 		A101000021CD90000001F301 /* StealthCompanionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StealthCompanionTests.swift; sourceTree = "<group>"; };
 		A101000021CD90000001E7F1 /* StealthClientArgvTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StealthClientArgvTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -332,6 +335,7 @@
 				0457E2FA21DFF1F600DD17A2 /* PreferencesController.swift */,
 				A101000021CD90000001F201 /* TunnelMenuSwitchViews.swift */,
 				A101000021CD90000001F401 /* MenuBuildOptions.swift */,
+				A101000021CD90000001F421 /* DisableAllMenu.swift */,
 				A101000021CD90000001F411 /* AppDelegate+StealthMenu.swift */,
 				0457E2FB21DFF1F600DD17A2 /* PreferencesController.xib */,
 				A101000021CD90000001E741 /* StealthSettingsStore.swift */,
@@ -643,6 +647,7 @@
 				0457E2FE21DFF2D400DD17A2 /* PreferencesController.swift in Sources */,
 				A101000021CD90000001F203 /* TunnelMenuSwitchViews.swift in Sources */,
 				A101000021CD90000001F403 /* MenuBuildOptions.swift in Sources */,
+				A101000021CD90000001F423 /* DisableAllMenu.swift in Sources */,
 				A101000021CD90000001F413 /* AppDelegate+StealthMenu.swift in Sources */,
 				0401E29D21C992EE0030E707 /* HelperXPC.swift in Sources */,
 				0401E2B221CD93340030E707 /* WireGuard.swift in Sources */,
@@ -666,6 +671,7 @@
 				0457E2FC21DFF1F600DD17A2 /* PreferencesController.swift in Sources */,
 				A101000021CD90000001F202 /* TunnelMenuSwitchViews.swift in Sources */,
 				A101000021CD90000001F402 /* MenuBuildOptions.swift in Sources */,
+				A101000021CD90000001F422 /* DisableAllMenu.swift in Sources */,
 				A101000021CD90000001F412 /* AppDelegate+StealthMenu.swift in Sources */,
 				A101000021CD90000001E742 /* StealthSettingsStore.swift in Sources */,
 				0401E2AC21CD853B0030E707 /* Menu.swift in Sources */,

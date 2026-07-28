@@ -15,6 +15,19 @@ extension AppDelegate {
         }
     }
 
+    @objc func disableAllTunnels(_: Any?) {
+        for tunnel in tunnels where tunnel.connected || pendingTunnelOperations[tunnel.name] == true {
+            setTunnelEnabled(tunnel.name, enabling: false)
+        }
+    }
+
+    @objc func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+        if menuItem.action == #selector(disableAllTunnels(_:)) {
+            return shouldEnableDisableAll(tunnels: tunnels, pending: pendingTunnelOperations)
+        }
+        return true
+    }
+
     func setTunnelEnabled(_ tunnelName: String, enabling: Bool) {
         pendingTunnelOperations[tunnelName] = enabling
         refreshStatusBarAppearance()

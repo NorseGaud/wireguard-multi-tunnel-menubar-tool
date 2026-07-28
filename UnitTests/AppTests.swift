@@ -130,6 +130,46 @@ class AppTests: XCTestCase {
         XCTAssertEqual(items[0].title, "A Tunnel Name")
     }
 
+    func testShouldEnableDisableAllWhenAllDown() {
+        XCTAssertFalse(shouldEnableDisableAll(tunnels: testTunnels, pending: [:]))
+    }
+
+    func testShouldEnableDisableAllWhenConnected() {
+        var tunnels = testTunnels
+        tunnels[0].interface = "utun1"
+        XCTAssertTrue(shouldEnableDisableAll(tunnels: tunnels, pending: [:]))
+    }
+
+    func testShouldEnableDisableAllWhenPendingEnable() {
+        let pending: PendingTunnelOperations = ["1 Tunnel Name": true]
+        XCTAssertTrue(shouldEnableDisableAll(tunnels: testTunnels, pending: pending))
+    }
+
+    func testBuildDisableAllMenuItems() {
+        var tunnels = testTunnels
+        tunnels[0].interface = "utun1"
+        let items = buildDisableAllMenuItems(
+            tunnels: tunnels,
+            pending: [:],
+            target: nil,
+            action: nil
+        )
+        XCTAssertEqual(items.count, 2)
+        XCTAssertEqual(items[0].title, "Disable All")
+        XCTAssertEqual(items[0].tag, MenuItemTypes.disableAll.rawValue)
+        XCTAssertTrue(items[0].isEnabled)
+        XCTAssertTrue(items[1].isSeparatorItem)
+        XCTAssertEqual(items[1].tag, MenuItemTypes.disableAllSeparator.rawValue)
+
+        let disabled = buildDisableAllMenuItems(
+            tunnels: testTunnels,
+            pending: [:],
+            target: nil,
+            action: nil
+        )
+        XCTAssertFalse(disabled[0].isEnabled)
+    }
+
     func testConfigParsing() {
         for (name, config) in testConfigs {
             print("Testing config \(name)")

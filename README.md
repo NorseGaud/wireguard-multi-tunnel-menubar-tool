@@ -16,6 +16,7 @@ This is a macOS statusbar item (aka menubar icon) that wraps wg-quick. It allows
 - Sit in your menubar
 - Indicates if tunnels are enabled
 - Bring tunnel up/down via the **Enabled** switch in the menu
+- **Disable All** at the top of the menu to disconnect every connected tunnel at once
 - **Support for having multiple tunnels enabled at once (Official Wireguard app doesn't support this)**
 - **Per-tunnel stealth / obfuscation** — AmneziaWG / udp2raw / wstunnel switches in the menu (see [Stealth / obfuscation](#stealth--obfuscation))
 - Exit tunnels on quit
@@ -194,6 +195,7 @@ This software as a whole is licensed under GPL-3.0
 - macOS 12+ deployment target and updated Xcode / lint tooling (`AGENTS.md` for contributors)
 - Per-tunnel stealth / obfuscation (AmneziaWG, udp2raw, wstunnel) — Preferences → Stealth; see [Stealth / obfuscation](#stealth--obfuscation)
 - Developer ID signing and notarization for `make dist` (team OU must match `SMAuthorizedClients` / `SMPrivilegedExecutables`; see [SECURITY.md](SECURITY.md))
+- Disable All menu item to disconnect every connected tunnel at once
 
 ### Planned
 

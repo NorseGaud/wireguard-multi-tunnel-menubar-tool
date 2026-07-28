@@ -92,8 +92,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSUserNotifi
         let showDetails = optionModifier || showAllTunnelDetails
         let showConnected = defaults.bool(forKey: "showConnectedTunnelDetails")
 
-        // remove dynamic tunnel items and the xib placeholder (separate tag)
-        for tag in [MenuItemTypes.tunnel.rawValue, MenuItemTypes.tunnelplaceholder.rawValue] {
+        // remove dynamic tunnel items, disable-all header, and the xib placeholder
+        for tag in [
+            MenuItemTypes.tunnel.rawValue,
+            MenuItemTypes.tunnelplaceholder.rawValue,
+            MenuItemTypes.disableAll.rawValue,
+            MenuItemTypes.disableAllSeparator.rawValue,
+        ] {
             while let item = menu.item(withTag: tag) {
                 menu.removeItem(item)
             }
@@ -113,6 +118,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSUserNotifi
         let tunnelMenuItems = buildMenu(tunnels: tunnels, options: menuOptions)
         for item in tunnelMenuItems.reversed() {
             item.tag = MenuItemTypes.tunnel.rawValue
+            menu.insertItem(item, at: 0)
+        }
+
+        let disableAllItems = buildDisableAllMenuItems(
+            tunnels: tunnels,
+            pending: pendingTunnelOperations,
+            target: self,
+            action: #selector(disableAllTunnels(_:))
+        )
+        for item in disableAllItems.reversed() {
             menu.insertItem(item, at: 0)
         }
         resizeTunnelMenuItemViews(in: menu)
