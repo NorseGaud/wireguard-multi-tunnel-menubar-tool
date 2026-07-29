@@ -157,7 +157,7 @@ Set the release version in the root `VERSION` file (for example `2.0.0`). `make`
 
 ### Signing & notarization
 
-Local `make dist` (and `make` / `make all`) Developer ID–signs the app and privileged helper, notarizes the DMG, and staples the ticket. Prerequisites:
+Local `make dist` (and `make` / `make all`) Developer ID–signs the app, privileged helper, and DMG `Uninstall.app`, notarizes the DMG, and staples the ticket. Uninstall steps stay in `Misc/Uninstall.sh`; the AppleScript app runs that script with administrator privileges. Prerequisites:
 
 1. **Developer ID Application** certificate for team `4JD8RUCQ2W` in your keychain
 2. One-time notary credentials profile (default name `wireguard-multitunnel`):

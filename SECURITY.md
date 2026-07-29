@@ -74,7 +74,7 @@ Behavior:
 
 ### Release builds vs self-signed builds
 
-The maintainer `make dist` path Developer ID–signs the app and helper (hardened runtime + timestamp), notarizes the versioned DMG with `notarytool` (keychain profile, default `wireguard-multitunnel`), and staples the ticket. Team OU remains **`4JD8RUCQ2W`** so it matches the SMJobBless / XPC requirements above. CI builds stay unsigned (`CODE_SIGNING_ALLOWED=NO`) and are only suitable for unit tests, not for installing the helper on a real system.
+The maintainer `make dist` path Developer ID–signs the app, helper, and DMG `Uninstall.app` (hardened runtime + timestamp), notarizes the versioned DMG with `notarytool` (keychain profile, default `wireguard-multitunnel`), and staples the ticket. Team OU remains **`4JD8RUCQ2W`** so it matches the SMJobBless / XPC requirements above. CI builds stay unsigned (`CODE_SIGNING_ALLOWED=NO`) and are only suitable for unit tests, not for installing the helper on a real system.
 
 That Gatekeeper-friendly release signing is separate from the **privileged-helper trust model**: `SMJobBless` and XPC validation still expect the app and helper to satisfy the plist requirements above. Ad-hoc or mismatched signing can cause helper install or XPC connection to fail even after Gatekeeper allows the app to open.
 

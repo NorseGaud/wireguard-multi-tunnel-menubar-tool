@@ -228,14 +228,22 @@ ${tmp}/WireGuardMultiTunnel-${git_sha}.app: ${build_dest}/WireGuardMultiTunnel.a
 	rm -rf "$@" && cp -r "${<}" "$@"
 
 # Generate contents for distributable .dmg (signed app when not CI)
-${dist}/WireGuardMultiTunnel.app: ${build_dest}/WireGuardMultiTunnel.app Misc/Uninstall.sh
+${dist}/WireGuardMultiTunnel.app: ${build_dest}/WireGuardMultiTunnel.app Misc/Uninstall.sh Misc/Uninstall.applescript
 ifndef CI
 ${dist}/WireGuardMultiTunnel.app: sign
 endif
-	rm -rf "${@D}/"; mkdir -p "${@D}/"
-	ln -sf /Applications "${@D}/Applications"
-	cp Misc/Uninstall.sh "${@D}/Uninstall"
+	@set -euo pipefail; \
+	rm -rf "${@D}/"; mkdir -p "${@D}/"; \
+	ln -sf /Applications "${@D}/Applications"; \
+	osacompile -o "${@D}/Uninstall.app" Misc/Uninstall.applescript; \
+	cp Misc/Uninstall.sh "${@D}/Uninstall.app/Contents/Resources/Uninstall.sh"; \
+	/usr/libexec/PlistBuddy -c 'Add :CFBundleIdentifier string WireGuardMultiTunnelUninstall' "${@D}/Uninstall.app/Contents/Info.plist"; \
 	rm -rf "$@" && cp -r "${build_dest}/WireGuardMultiTunnel.app" "$@"
+ifndef CI
+	@set -euo pipefail; \
+	codesign --force --options runtime --timestamp --sign '${CODESIGN_IDENTITY}' "${dist}/Uninstall.app"; \
+	codesign --verify --deep --strict --verbose=2 "${dist}/Uninstall.app"
+endif
 
 # Generate archive build (this excludes debug symbols (dSYM) which are in a release build)
 ${build_dest}/WireGuardMultiTunnel.app: bump-build-number ${sources} | icons ensure-xcpretty
