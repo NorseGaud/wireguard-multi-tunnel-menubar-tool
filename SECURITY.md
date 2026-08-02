@@ -38,11 +38,8 @@ Communication uses simple, typed primitives (no arbitrary shell commands from th
 |--------|---------|
 | `getTunnels` | Tunnel names, interface names, and censored config text |
 | `setTunnel(tunnelName:enable:)` | Bring a tunnel up or down via `wg-quick` |
-| `setTunnel(tunnelName:enable:stealthProfileJSON:)` | Same, with an optional JSON-encoded stealth profile (Amnezia / udp2raw / wstunnel layers) |
 | `getVersion` | Helper bundle version (for update detection) |
 | `wireguardInstalled` | Whether validated `wg` and `wg-quick` binaries exist |
-| `getStealthProfiles` / `setStealthProfile` | Load/save companion `<tunnel>.stealth.json` |
-| `stealthToolsStatus` | JSON map of which stealth binaries exist under `brewPrefix/bin` |
 
 **Helper → app** (`AppProtocol`):
 
@@ -91,7 +88,6 @@ The helper executes external tools only after path validation (`PathSecurity`):
 - **`brewPrefix`** — must be an absolute directory path; symlinks are resolved; `..` segments are rejected. Default: `/opt/homebrew`. Configs are read from `${brewPrefix}/etc/wireguard`.
 - **`wgquickBinPath`** — optional override via root `defaults`; must be an absolute path whose last component is exactly `wg-quick`, must exist as a non-directory file, and must be executable when checked by `wireguardInstalled`.
 - **`wg`** — derived as `${brewPrefix}/bin/wg` (same validation rules for executables).
-- **Stealth tools** — `awg-quick`, `amneziawg-go`, `udp2raw`, and `wstunnel` are resolved only as `${brewPrefix}/bin/<basename>`. Each path must pass the same absolute-path and basename checks as `wg-quick` (`PathSecurity.validateExecutableBinaryPath`). Symlinks are resolved; `..` segments are rejected.
 
 Invalid `defaults` values are logged and the helper falls back to defaults rather than using an unsafe path.
 
@@ -108,17 +104,6 @@ The menubar app does not read these helper `defaults`; it may still warn that Wi
 
 Tunnel configuration files on disk contain private keys. Before config text is sent to the app, the helper runs `WireGuard.censorConfigurationData`, which redacts `PrivateKey` and `PresharedKey` lines. Unit tests assert that raw key material does not appear in censored output (`UnitTests/HelperTests.swift`). Error messages from `wg-quick` are also passed through the same censoring where applicable.
 
-## Stealth / obfuscation security
-
-When a tunnel is brought up with stealth layers enabled, the helper:
-
-- Accepts a **JSON stealth profile** over XPC (`setTunnel(..., stealthProfileJSON:)`). Layer settings and enable flags live in companion `<tunnel>.stealth.json` beside the WireGuard conf (read/written by the helper). Amnezia protocol params stay in the `.conf`.
-- Writes **ephemeral configs** under `/var/run/wireguard-multitunnel/stealth/` (`stealthRunPath`). These are rewritten copies (local endpoint injection, optional Amnezia keys) used only for the current session and removed on tear-down.
-- Starts wrapper processes with **argv only** — no shell invocation. Free-form per-layer `extraArgs` are rejected in v1 (`StealthValidationError.extraArgsNotSupported`).
-- **Does not log** udp2raw passwords, Amnezia secrets, or full stealth profile payloads. Logs are limited to layer names, ports, PIDs, and exit codes.
-
-Stealth obfuscation changes transport appearance; it does not replace WireGuard's cryptographic trust model. Endpoint trust and key verification remain the user's responsibility.
-
 ## Helper lifecycle
 
 - The helper process starts when the app establishes XPC and stays alive while connections exist.
@@ -127,7 +112,7 @@ Stealth obfuscation changes transport appearance; it does not replace WireGuard'
 
 ## Design goals and limits
 
-The helper keeps a narrow surface: WireGuard paths, `wg` / `wg-quick`, validated stealth wrapper binaries under `brewPrefix`, filesystem notifications, and the XPC API above. It is not a general-purpose root executor.
+The helper keeps a narrow surface: WireGuard paths, `wg` / `wg-quick`, filesystem notifications, and the XPC API above. It is not a general-purpose root executor.
 
 What this model **does** enforce:
 

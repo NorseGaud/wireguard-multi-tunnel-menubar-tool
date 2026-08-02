@@ -3,7 +3,7 @@ import Cocoa
 /// Compact menu switch that paints green when on (system NSSwitch follows accent/graphite).
 final class TunnelMenuSwitch: NSControl {
     var tunnelName = ""
-    /// `enabled`, `amnezia`, `udp2raw`, or `wstunnel`
+    /// Currently only `enabled`
     var controlKind = ""
 
     private var switchState: NSControl.StateValue = .off
@@ -34,9 +34,12 @@ final class TunnelMenuSwitch: NSControl {
 
     override func mouseDown(with _: NSEvent) {
         guard isEnabled else { return }
-        state = state == .on ? .off : .on
-        // Row background is drawn by the parent; refresh it immediately.
-        (superview as? TunnelSwitchMenuItemView)?.applyOnBackground(isOn: state == .on)
+        let nextOn = state != .on
+        if let row = superview as? TunnelSwitchMenuItemView {
+            row.setSwitchOn(nextOn)
+        } else {
+            state = nextOn ? .on : .off
+        }
         sendAction(action, to: target)
     }
 
@@ -75,10 +78,11 @@ final class TunnelMenuSwitch: NSControl {
     }
 }
 
-/// Indented menu row: label + trailing switch (Enabled / stealth layers).
+/// Indented menu row: label + trailing switch (Enabled).
 final class TunnelSwitchMenuItemView: TunnelRowMenuItemView {
     let menuSwitch: TunnelMenuSwitch
     private let titleLabel: NSTextField
+    private(set) var isOnAppearance = false
 
     init(title: String, isOn: Bool, tunnelName: String, controlKind: String, menuWidth: CGFloat, target: AnyObject?,
          action: Selector?) {
@@ -90,7 +94,6 @@ final class TunnelSwitchMenuItemView: TunnelRowMenuItemView {
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         addSubview(titleLabel)
 
-        menuSwitch.state = isOn ? .on : .off
         menuSwitch.tunnelName = tunnelName
         menuSwitch.controlKind = controlKind
         menuSwitch.target = target
@@ -108,19 +111,18 @@ final class TunnelSwitchMenuItemView: TunnelRowMenuItemView {
             menuSwitch.heightAnchor.constraint(equalToConstant: 22),
         ])
 
+        setSwitchOn(isOn)
+    }
+
+    /// Keep switch knob and row label in sync (including failed optimistic toggles).
+    func setSwitchOn(_ isOn: Bool) {
+        menuSwitch.state = isOn ? .on : .off
         applyOnBackground(isOn: isOn)
     }
 
     func applyOnBackground(isOn: Bool) {
-        titleLabel.textColor = isOn ? .black : .labelColor
+        isOnAppearance = isOn
+        titleLabel.textColor = isOn ? .systemGreen : .labelColor
         needsDisplay = true
-    }
-
-    override func draw(_ dirtyRect: NSRect) {
-        if menuSwitch.state == .on {
-            NSColor.systemGreen.withAlphaComponent(0.22).setFill()
-            bounds.fill()
-        }
-        super.draw(dirtyRect)
     }
 }

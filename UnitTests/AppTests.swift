@@ -33,7 +33,7 @@ class AppTests: XCTestCase {
         XCTAssertEqual(items[0].title, "1 Tunnel Name")
         XCTAssertNotNil(items[0].view)
         XCTAssertTrue(items[0].isEnabled)
-        XCTAssertEqual(switchTitles(in: items, after: 0), ["Enabled", "Amnezia", "udp2raw", "wstunnel"])
+        XCTAssertEqual(switchTitles(in: items, after: 0), ["Enabled"])
     }
 
     func testMenuEnabledTunnel() {
@@ -43,11 +43,11 @@ class AppTests: XCTestCase {
         let items = buildMenu(tunnels: tunnels)
         XCTAssertEqual(items[0].title, "1 Tunnel Name")
         XCTAssertNotNil(items[0].view)
-        XCTAssertEqual(switchTitles(in: items, after: 0), ["Enabled", "Amnezia", "udp2raw", "wstunnel"])
-        XCTAssertEqual(items[5].title, "Interface: utun1")
-        XCTAssertEqual(items[6].title, "Address: 192.0.2.0/32")
-        XCTAssertEqual(items[7].title, "Endpoint: 192.0.2.1/32:51820")
-        XCTAssertEqual(items[8].title, "Allowed IPs: 198.51.100.0/24")
+        XCTAssertEqual(switchTitles(in: items, after: 0), ["Enabled"])
+        XCTAssertEqual(items[2].title, "Interface: utun1")
+        XCTAssertEqual(items[3].title, "Address: 192.0.2.0/32")
+        XCTAssertEqual(items[4].title, "Endpoint: 192.0.2.1/32:51820")
+        XCTAssertEqual(items[5].title, "Allowed IPs: 198.51.100.0/24")
     }
 
     func testMenuEnabledTunnelNoDetails() {
@@ -57,8 +57,8 @@ class AppTests: XCTestCase {
         var opts = MenuBuildOptions()
         opts.connectedTunnelDetails = false
         let items = buildMenu(tunnels: tunnels, options: opts)
-        // first tunnel: name + 4 switches; second tunnel starts next
-        XCTAssertEqual(items[5].title, "2 Invalid Config")
+        // first tunnel: name + Enabled; second tunnel starts next
+        XCTAssertEqual(items[2].title, "2 Invalid Config")
     }
 
     func testMenuDetails() {
@@ -70,14 +70,14 @@ class AppTests: XCTestCase {
         let items = buildMenu(tunnels: tunnels, options: opts)
         XCTAssertEqual(items[0].title, "1 Tunnel Name")
         XCTAssertNotNil(items[0].view)
-        XCTAssertEqual(items[5].title, "Interface: utun1")
+        XCTAssertEqual(items[2].title, "Interface: utun1")
+        XCTAssertEqual(items[2].indentationLevel, 1)
+        XCTAssertEqual(items[3].title, "Address: 192.0.2.0/32")
+        XCTAssertEqual(items[3].indentationLevel, 1)
+        XCTAssertEqual(items[4].title, "Endpoint: 192.0.2.1/32:51820")
+        XCTAssertEqual(items[4].indentationLevel, 1)
+        XCTAssertEqual(items[5].title, "Allowed IPs: 198.51.100.0/24")
         XCTAssertEqual(items[5].indentationLevel, 1)
-        XCTAssertEqual(items[6].title, "Address: 192.0.2.0/32")
-        XCTAssertEqual(items[6].indentationLevel, 1)
-        XCTAssertEqual(items[7].title, "Endpoint: 192.0.2.1/32:51820")
-        XCTAssertEqual(items[7].indentationLevel, 1)
-        XCTAssertEqual(items[8].title, "Allowed IPs: 198.51.100.0/24")
-        XCTAssertEqual(items[8].indentationLevel, 1)
     }
 
     func testMenuDetailsInvalidConfig() {
@@ -87,12 +87,12 @@ class AppTests: XCTestCase {
         var opts = MenuBuildOptions()
         opts.allTunnelDetails = true
         let items = buildMenu(tunnels: tunnels, options: opts)
-        // tunnel 1 (disconnected): name + 4 switches + 3 config details = 8; then tunnel 2
-        let offset = 8
+        // tunnel 1 (disconnected): name + Enabled + 3 config details = 5; then tunnel 2
+        let offset = 5
         XCTAssertEqual(items[0 + offset].title, "2 Invalid Config")
         XCTAssertNotNil(items[0 + offset].view)
-        XCTAssertEqual(items[5 + offset].title, "Interface: utun1")
-        XCTAssertEqual(items[6 + offset].title, "Could not parse tunnel configuration!")
+        XCTAssertEqual(items[2 + offset].title, "Interface: utun1")
+        XCTAssertEqual(items[3 + offset].title, "Could not parse tunnel configuration!")
     }
 
     func testMenuNoTunnels() {
@@ -184,6 +184,6 @@ class AppTests: XCTestCase {
     }
 
     private func switchTitles(in items: [NSMenuItem], after nameIndex: Int) -> [String] {
-        (1 ... 4).map { items[nameIndex + $0].title }
+        [items[nameIndex + 1].title]
     }
 }

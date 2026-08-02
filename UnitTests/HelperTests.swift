@@ -74,39 +74,4 @@ class HelperTests: XCTestCase {
     func testValidateBinaryPathAcceptsExistingBinary() {
         XCTAssertEqual(PathSecurity.validateBinaryPath("/bin/sh", expectedBasename: "sh"), "/bin/sh")
     }
-
-    func testStealthToolsStatusReturnsJSON() {
-        let exp = expectation(description: "status")
-        Helper().stealthToolsStatus { json in
-            XCTAssertNotNil(try? JSONDecoder().decode(StealthToolsStatus.self, from: Data(json.utf8)))
-            exp.fulfill()
-        }
-        wait(for: [exp], timeout: 2)
-    }
-
-    func testDisablePlanIgnoresInvalidAndIncompleteProfileJSON() throws {
-        XCTAssertEqual(
-            try StealthSetTunnelPlanner.plan(enable: false, stealthProfileJSON: "{not-json"),
-            .down
-        )
-        let incomplete = #"{"schemaVersion":1,"udp2raw":{"enabled":true}}"#
-        XCTAssertEqual(
-            try StealthSetTunnelPlanner.plan(enable: false, stealthProfileJSON: incomplete),
-            .down
-        )
-        XCTAssertEqual(
-            try StealthSetTunnelPlanner.plan(enable: false, stealthProfileJSON: ""),
-            .down
-        )
-    }
-
-    func testEnablePlanRejectsInvalidProfileJSON() {
-        XCTAssertThrowsError(
-            try StealthSetTunnelPlanner.plan(enable: true, stealthProfileJSON: "{not-json")
-        )
-        let incomplete = #"{"schemaVersion":1,"udp2raw":{"enabled":true}}"#
-        XCTAssertThrowsError(
-            try StealthSetTunnelPlanner.plan(enable: true, stealthProfileJSON: incomplete)
-        )
-    }
 }

@@ -29,9 +29,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSUserNotifi
     let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
     @IBOutlet var menu: NSMenu!
 
-    /// Companion-file stealth profiles keyed by tunnel name (from helper).
-    var stealthProfiles: [String: StealthProfile] = [:]
-
     var privilegedHelper: HelperXPC?
 
     /// Tunnel name → target enabled state while wg-quick is running.
@@ -110,7 +107,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSUserNotifi
         var menuOptions = MenuBuildOptions()
         menuOptions.menuItemWidth = menuWidth
         menuOptions.pendingTunnels = pendingTunnelOperations
-        menuOptions.stealthProfiles = stealthProfiles
         menuOptions.switchTarget = self
         menuOptions.switchAction = #selector(tunnelMenuSwitchChanged(_:))
         menuOptions.allTunnelDetails = showDetails
@@ -160,20 +156,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSUserNotifi
             self.tunnels = tunnelInfo.map { name, interfaceAndConfigData in
                 Tunnel(name: name, fromTunnelInfo: interfaceAndConfigData)
             }
-            xpcService?.getStealthProfiles { json in
-                self.stealthProfiles = Self.parseStealthProfilesJSON(json)
-                DispatchQueue.main.async { self.applyTunnelStateUpdate() }
-            }
+            DispatchQueue.main.async { self.applyTunnelStateUpdate() }
         })
-    }
-
-    private static func parseStealthProfilesJSON(_ json: String) -> [String: StealthProfile] {
-        guard let data = json.data(using: .utf8),
-              let profiles = try? JSONDecoder().decode([String: StealthProfile].self, from: data)
-        else {
-            return [:]
-        }
-        return profiles
     }
 
     func applyTunnelStateUpdate() {
@@ -181,6 +165,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSUserNotifi
         refreshStatusBarAppearance()
         // Prefer in-place sync while the menu may still be open.
         syncOpenMenuForAllTunnels()
+        rebuildStatusMenuIfAllowed()
+    }
+
+    /// Rebuild only when the status menu is closed; open-menu updates use sync helpers.
+    func rebuildStatusMenuIfAllowed() {
+        guard shouldRebuildStatusMenu(isStatusItemHighlighted: statusItem.button?.isHighlighted) else {
+            return
+        }
         menu.update()
     }
 
@@ -220,14 +212,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSUserNotifi
     }
 
     /// Use notificationcenter banner to inform user of failed tunnel command
-    func notifyError(_ errorMessage: String) {
+    func notifyError(_ errorMessage: String, title: String = "Failed to change tunnel state!") {
         let notification = NSUserNotification()
-        notification.title = "Failed to change tunnel state!"
+        notification.title = title
         if errorMessage.split(separator: "\n").count == 1 {
             notification.informativeText = errorMessage
             notification.hasActionButton = false
         }
-        notification.userInfo = ["message": errorMessage]
+        notification.userInfo = ["message": errorMessage, "title": title]
         let center = NSUserNotificationCenter.default
         center.delegate = self
         center.scheduleNotification(notification)
@@ -243,8 +235,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSUserNotifi
         switch notification.activationType {
         case .actionButtonClicked:
             let message = notification.userInfo?["message"] as? String ?? "InternalError: failed to get error message."
+            let title = notification.userInfo?["title"] as? String ?? "Failed to change tunnel state!"
             let alert = NSAlert()
-            alert.messageText = "Failed to change tunnel state!"
+            alert.messageText = title
             alert.informativeText = message
             alert.runModal()
         default:

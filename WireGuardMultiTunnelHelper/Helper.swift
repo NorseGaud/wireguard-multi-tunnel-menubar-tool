@@ -148,87 +148,20 @@ class Helper: NSObject, HelperProtocol, SKQueueDelegate {
     // XPC: called by App to have Helper change the state of a tunnel to up or down
     func setTunnel(tunnelName: String, enable: Bool, reply:
         @escaping (_ success: Bool, _ errorMessage: String) -> Void) {
-        setTunnel(tunnelName: tunnelName, enable: enable, stealthProfileJSON: "", reply: reply)
-    }
-
-    // XPC: tunnel up/down with optional stealth profile JSON (empty = plain WireGuard)
-    func setTunnel(tunnelName: String, enable: Bool, stealthProfileJSON: String, reply:
-        @escaping (_ success: Bool, _ errorMessage: String) -> Void) {
         if !WireGuard.validateTunnelName(tunnelName: tunnelName) {
             NSLog("Invalid tunnel name '\(tunnelName)'")
             reply(false, "Invalid tunnel name '\(tunnelName)'")
             return
         }
 
-        let plan: StealthSetTunnelPlan
-        do {
-            plan = try StealthSetTunnelPlanner.plan(enable: enable, stealthProfileJSON: stealthProfileJSON)
-        } catch {
-            reply(false, "Invalid stealth profile: \(error)")
-            return
-        }
-
-        let (success, rawErrorMessage): (Bool, String)
-        switch plan {
-        case .down:
-            (success, rawErrorMessage) = bringTunnelDown(tunnelName: tunnelName)
-        case .upPlain:
-            NSLog("Set tunnel \(tunnelName) up")
-            (success, rawErrorMessage) = wireguard.setTunnel(tunnelName: tunnelName, enable: true)
-        case let .upStealth(profile):
-            (success, rawErrorMessage) = bringStealthTunnelUp(tunnelName: tunnelName, profile: profile)
-        }
+        NSLog("Set tunnel \(tunnelName) \(enable ? "up" : "down")")
+        let (success, rawErrorMessage) = wireguard.setTunnel(tunnelName: tunnelName, enable: enable)
 
         // Belt-and-suspenders: never return uncensorable key material over XPC.
         reply(success, WireGuard.censorConfigurationData(rawErrorMessage))
         // /var/run/wireguard may be created on first up; re-register watchers and notify App.
         registerWireGuardStateWatch()
         appUpdateState()
-    }
-
-    func getStealthProfiles(_ reply: @escaping (String) -> Void) {
-        var profiles: [String: StealthProfile] = [:]
-        for tunnelName in wireguard.tunnelNames() {
-            guard let configPath = wireguard.configFilePath(for: tunnelName) else { continue }
-            profiles[tunnelName] = StealthCompanion.load(tunnelName: tunnelName, configFilePath: configPath)
-        }
-        if let data = try? JSONEncoder().encode(profiles),
-           let json = String(data: data, encoding: .utf8) {
-            reply(json)
-        } else {
-            reply("{}")
-        }
-    }
-
-    func setStealthProfile(tunnelName: String, stealthProfileJSON: String,
-                           reply: @escaping (_ success: Bool, _ errorMessage: String) -> Void) {
-        guard WireGuard.validateTunnelName(tunnelName: tunnelName) else {
-            reply(false, "Invalid tunnel name '\(tunnelName)'")
-            return
-        }
-        guard let configPath = wireguard.configFilePath(for: tunnelName) else {
-            reply(false, "Could not find configuration file for tunnel '\(tunnelName)'")
-            return
-        }
-        do {
-            let profile = try StealthProfile.parse(jsonString: stealthProfileJSON)
-            try profile.validate()
-            try StealthCompanion.save(profile: profile, tunnelName: tunnelName, configFilePath: configPath)
-            reply(true, "")
-        } catch {
-            reply(false, "Failed to save stealth profile: \(error)")
-        }
-    }
-
-    func stealthToolsStatus(_ reply: @escaping (String) -> Void) {
-        let status = currentStealthToolsStatus()
-        guard let data = try? JSONEncoder().encode(status),
-              let json = String(data: data, encoding: .utf8)
-        else {
-            reply("{\"amnezia\":false,\"udp2raw\":false,\"wstunnel\":false}")
-            return
-        }
-        reply(json)
     }
 
     // XPC: allow App to query version of helper to allow updating when a new version is available
@@ -256,7 +189,7 @@ class Helper: NSObject, HelperProtocol, SKQueueDelegate {
 
     func shutdown() {
         NSLog("Going to shut down")
-        shutdownConnectedTunnelsClearingStealth()
+        wireguard.shutdownConnectedTunnels()
         // Dispatch the shutdown of the runloop to at least 10 seconds after starting the application.
         // This will shutdown immidiately if the deadline already passed.
         shutdownTask = DispatchWorkItem {

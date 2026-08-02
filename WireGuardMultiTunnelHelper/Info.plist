@@ -11,7 +11,7 @@
 	<key>CFBundleShortVersionString</key>
 	<string>2.1.1</string>
 	<key>CFBundleVersion</key>
-	<string>157</string>
+	<string>161</string>
 	<key>Hash</key>
 	<string>303e3fef62e57d3b185e15d2fb15ab21</string>
 	<key>SMAuthorizedClients</key>
@@ -19,6 +19,6 @@
 		<string>anchor apple generic and identifier "WireGuardMultiTunnel" and certificate leaf[subject.OU] = "4JD8RUCQ2W"</string>
 	</array>
 	<key>SOURCE_HASH</key>
-	<string>7bd34ab7f51b8a5fbba29d6bdb49d576</string>
+	<string>7af3319f370a9a2ea09319a2328fcf85</string>
 </dict>
 </plist>

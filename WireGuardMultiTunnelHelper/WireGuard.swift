@@ -120,16 +120,8 @@ struct WireGuard {
     }
 
     /// Bring down every tunnel that is currently connected.
-    /// - Parameter stealthBringDown: Optional per-tunnel stealth teardown. Return non-nil when the
-    ///   tunnel had stealth state and was handled (skip plain setTunnel).
-    func shutdownConnectedTunnels(stealthBringDown: ((String) -> (Bool, String)?)? = nil) {
+    func shutdownConnectedTunnels() {
         for tunnelName in tunnelNames() {
-            if let stealthBringDown, let result = stealthBringDown(tunnelName) {
-                if !result.0 {
-                    NSLog("Failed to shut down stealth tunnel '\(tunnelName)' on quit: \(result.1)")
-                }
-                continue
-            }
             guard !interfaceName(tunnelName).isEmpty else { continue }
             NSLog("Shutting down tunnel '\(tunnelName)' on app quit")
             let (success, errorMessage) = setTunnel(tunnelName: tunnelName, enable: false)
