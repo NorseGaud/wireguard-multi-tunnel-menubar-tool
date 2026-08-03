@@ -75,6 +75,9 @@
 		A101000021CD90000001F423 /* DisableAllMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001F421 /* DisableAllMenu.swift */; };
 		A101000021CD90000001F203 /* TunnelMenuSwitchViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001F201 /* TunnelMenuSwitchViews.swift */; };
 		A101000021CD90000001F502 /* MenuSwitchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001F501 /* MenuSwitchTests.swift */; };
+		A101000021CD90000001F602 /* TunnelRestore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001F601 /* TunnelRestore.swift */; };
+		A101000021CD90000001F603 /* TunnelRestore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001F601 /* TunnelRestore.swift */; };
+		A101000021CD90000001F612 /* TunnelRestoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001F611 /* TunnelRestoreTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -168,6 +171,8 @@
 		A101000021CD90000001F401 /* MenuBuildOptions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBuildOptions.swift; sourceTree = "<group>"; };
 		A101000021CD90000001F411 /* AppDelegate+TunnelMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+TunnelMenu.swift"; sourceTree = "<group>"; };
 		A101000021CD90000001F421 /* DisableAllMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisableAllMenu.swift; sourceTree = "<group>"; };
+		A101000021CD90000001F601 /* TunnelRestore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TunnelRestore.swift; sourceTree = "<group>"; };
+		A101000021CD90000001F611 /* TunnelRestoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TunnelRestoreTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -237,6 +242,7 @@
 			children = (
 				04B2BD4321BDA69000CCAE2F /* AppTests.swift */,
 				A101000021CD90000001F501 /* MenuSwitchTests.swift */,
+				A101000021CD90000001F611 /* TunnelRestoreTests.swift */,
 				0401E2AE21CD91E00030E707 /* HelperTests.swift */,
 				04B2BD4521BDA69000CCAE2F /* Info.plist */,
 				04C5BE2921E5266A009EE19A /* Shared.swift */,
@@ -278,6 +284,7 @@
 				A101000021CD90000001F401 /* MenuBuildOptions.swift */,
 				A101000021CD90000001F421 /* DisableAllMenu.swift */,
 				A101000021CD90000001F411 /* AppDelegate+TunnelMenu.swift */,
+				A101000021CD90000001F601 /* TunnelRestore.swift */,
 				0457E2FB21DFF1F600DD17A2 /* PreferencesController.xib */,
 				0401E29821C9913B0030E707 /* Tunnel.swift */,
 			);
@@ -562,6 +569,8 @@
 				A101000021CD90000001F403 /* MenuBuildOptions.swift in Sources */,
 				A101000021CD90000001F423 /* DisableAllMenu.swift in Sources */,
 				A101000021CD90000001F413 /* AppDelegate+TunnelMenu.swift in Sources */,
+				A101000021CD90000001F603 /* TunnelRestore.swift in Sources */,
+				A101000021CD90000001F612 /* TunnelRestoreTests.swift in Sources */,
 				0401E29D21C992EE0030E707 /* HelperXPC.swift in Sources */,
 				0401E2B221CD93340030E707 /* WireGuard.swift in Sources */,
 				0401E2B121CD92A80030E707 /* Helper.swift in Sources */,
@@ -584,6 +593,7 @@
 				A101000021CD90000001F402 /* MenuBuildOptions.swift in Sources */,
 				A101000021CD90000001F422 /* DisableAllMenu.swift in Sources */,
 				A101000021CD90000001F412 /* AppDelegate+TunnelMenu.swift in Sources */,
+				A101000021CD90000001F602 /* TunnelRestore.swift in Sources */,
 				0401E2AC21CD853B0030E707 /* Menu.swift in Sources */,
 				0401E29721C990FB0030E707 /* HelperXPC.swift in Sources */,
 				0456DA6521BB0C9000701CCE /* HelperProtocol.swift in Sources */,
