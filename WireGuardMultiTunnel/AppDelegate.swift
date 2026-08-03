@@ -37,6 +37,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSUserNotifi
     private var statusBarSpinner: NSProgressIndicator?
     private var isUpdatingTunnelMenu = false
 
+    let tunnelRestoreStore = TunnelRestoreStore()
+    private var didRunLaunchTunnelRestore = false
+
     func applicationDidFinishLaunching(_: Notification) {
         // set default preferences
         defaults.register(defaults: DefaultSettings.App)
@@ -166,6 +169,27 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSUserNotifi
         // Prefer in-place sync while the menu may still be open.
         syncOpenMenuForAllTunnels()
         rebuildStatusMenuIfAllowed()
+
+        if !didRunLaunchTunnelRestore {
+            didRunLaunchTunnelRestore = true
+            restoreLastConnectedTunnels()
+        } else {
+            tunnelRestoreStore.saveConnectedTunnels(tunnels)
+        }
+    }
+
+    func restoreLastConnectedTunnels() {
+        let stored = tunnelRestoreStore.load()
+        let plan = planTunnelRestore(storedNames: stored, tunnels: tunnels)
+
+        if !plan.namesToDrop.isEmpty {
+            let remaining = stored.filter { !plan.namesToDrop.contains($0) }
+            tunnelRestoreStore.save(remaining)
+        }
+
+        for name in plan.namesToEnable {
+            setTunnelEnabled(name, enabling: true)
+        }
     }
 
     /// Rebuild only when the status menu is closed; open-menu updates use sync helpers.
