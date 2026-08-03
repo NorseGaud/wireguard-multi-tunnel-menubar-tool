@@ -105,6 +105,8 @@ This software as a whole is licensed under GPL-3.0
 - macOS 12+ deployment target and updated Xcode / lint tooling (`AGENTS.md` for contributors)
 - Developer ID signing and notarization for `make dist` (team OU must match `SMAuthorizedClients` / `SMPrivilegedExecutables`; see [SECURITY.md](SECURITY.md))
 - Disable All menu item to disconnect every connected tunnel at once
+- Start at login from Preferences (macOS 13+; disabled on macOS 12)
+- Restore last connected tunnels on every app launch
 
 ### Planned
 
@@ -115,8 +117,6 @@ This software as a whole is licensed under GPL-3.0
 - Key management (Keychain)
 - Tunnel metadata (groups, display names, etc.)
 - Menu sort options: recent tunnels on top, active tunnels on top
-- Auto-start selected tunnels when the app launches
-- Launch WireGuardMultiTunnel at login
 - Bundle or ship WireGuard tools; reduce reliance on Homebrew/bash 4 and explore custom routing (e.g. exclude LAN from full-tunnel routes)
 - Broader Help menu (troubleshooting, links) beyond About and install instructions
 - In-app update checking
