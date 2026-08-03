@@ -9,9 +9,9 @@
 	<key>CFBundleName</key>
 	<string>WireGuardMultiTunnelHelper</string>
 	<key>CFBundleShortVersionString</key>
-	<string>2.1.1</string>
+	<string>2.1.2</string>
 	<key>CFBundleVersion</key>
-	<string>161</string>
+	<string>162</string>
 	<key>Hash</key>
 	<string>303e3fef62e57d3b185e15d2fb15ab21</string>
 	<key>SMAuthorizedClients</key>
