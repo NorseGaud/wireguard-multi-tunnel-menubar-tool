@@ -23,6 +23,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSUserNotifi
 
     /// keep the existence and state of all tunnel(configuration)s
     var tunnels = Tunnels()
+    var configDirectory = ""
 
     @objc dynamic var wireguardInstalled = false
 
@@ -98,6 +99,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSUserNotifi
             MenuItemTypes.tunnelplaceholder.rawValue,
             MenuItemTypes.disableAll.rawValue,
             MenuItemTypes.disableAllSeparator.rawValue,
+            MenuItemTypes.configFolder.rawValue,
         ] {
             while let item = menu.item(withTag: tag) {
                 menu.removeItem(item)
@@ -128,6 +130,21 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSUserNotifi
         )
         for item in disableAllItems.reversed() {
             menu.insertItem(item, at: 0)
+        }
+
+        let configFolderItems = buildConfigFolderMenuItems(
+            configDirectory: configDirectory,
+            target: self,
+            action: #selector(openConfigFolder(_:))
+        )
+        let configInsertIndex: Int
+        if let lastTunnel = menu.items.lastIndex(where: { $0.tag == MenuItemTypes.tunnel.rawValue }) {
+            configInsertIndex = lastTunnel + 1
+        } else {
+            configInsertIndex = menu.items.count
+        }
+        for item in configFolderItems.reversed() {
+            menu.insertItem(item, at: configInsertIndex)
         }
         resizeTunnelMenuItemViews(in: menu)
     }
@@ -161,6 +178,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSUserNotifi
             }
             DispatchQueue.main.async { self.applyTunnelStateUpdate() }
         })
+        xpcService?.getConfigDirectory { path in
+            DispatchQueue.main.async {
+                self.configDirectory = path
+                self.rebuildStatusMenuIfAllowed()
+            }
+        }
     }
 
     func applyTunnelStateUpdate() {

@@ -34,6 +34,17 @@ class HelperTests: XCTestCase {
         XCTAssertEqual(alias, WireGuard.wgQuickInterfaceName(for: "WireGuard-nathan"))
     }
 
+    func testGetConfigDirectory() {
+        let expectation = XCTestExpectation(description: "config directory")
+        Helper().getConfigDirectory { path in
+            XCTAssertTrue(path.hasPrefix("/"))
+            XCTAssertTrue(path.hasSuffix("/etc/wireguard"))
+            XCTAssertFalse(path.contains(".."))
+            expectation.fulfill()
+        }
+        wait(for: [expectation], timeout: 1)
+    }
+
     /// a version string should be returned
     func testGetVersion() {
         Helper().getVersion { version in

@@ -17,6 +17,7 @@ This is a macOS statusbar item (aka menubar icon) that wraps wg-quick. It allows
 - Indicates if tunnels are enabled
 - Bring tunnel up/down via the **Enabled** switch in the menu
 - **Disable All** at the top of the menu to disconnect every connected tunnel at once
+- Show the WireGuard config folder at the bottom of the menu and open it in Finder
 - **Support for having multiple tunnels enabled at once (Official Wireguard app doesn't support this)**
 - Exit tunnels on quit
 - ~~Fail miserably when brew/wg-quick is not installed or permissions on files are incorrect~~

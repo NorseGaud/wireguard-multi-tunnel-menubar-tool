@@ -145,6 +145,10 @@ class Helper: NSObject, HelperProtocol, SKQueueDelegate {
         }))
     }
 
+    func getConfigDirectory(reply: @escaping (String) -> Void) {
+        reply(wireguard.configPaths.first ?? "")
+    }
+
     // XPC: called by App to have Helper change the state of a tunnel to up or down
     func setTunnel(tunnelName: String, enable: Bool, reply:
         @escaping (_ success: Bool, _ errorMessage: String) -> Void) {

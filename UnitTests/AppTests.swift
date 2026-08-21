@@ -145,6 +145,46 @@ class AppTests: XCTestCase {
         XCTAssertTrue(shouldEnableDisableAll(tunnels: testTunnels, pending: pending))
     }
 
+    func testConfigFolderMenuHiddenWhenPathMissing() {
+        XCTAssertTrue(buildConfigFolderMenuItems(configDirectory: nil, target: nil, action: nil).isEmpty)
+        XCTAssertTrue(buildConfigFolderMenuItems(configDirectory: "", target: nil, action: nil).isEmpty)
+        XCTAssertTrue(buildConfigFolderMenuItems(configDirectory: "   ", target: nil, action: nil).isEmpty)
+        XCTAssertTrue(buildConfigFolderMenuItems(configDirectory: "etc/wireguard", target: nil, action: nil).isEmpty)
+    }
+
+    func testConfigFolderMenuShowsPathAndOpen() {
+        let path = "/opt/homebrew/etc/wireguard"
+        let items = buildConfigFolderMenuItems(configDirectory: path, target: nil, action: nil)
+        XCTAssertEqual(items.count, 3)
+        guard items.count == 3 else { return }
+        XCTAssertTrue(items[0].isSeparatorItem)
+        XCTAssertEqual(items[0].tag, MenuItemTypes.configFolder.rawValue)
+        XCTAssertEqual(items[1].title, "Config folder: \(path)")
+        XCTAssertEqual(items[1].toolTip, path)
+        XCTAssertFalse(items[1].isEnabled)
+        XCTAssertEqual(items[1].tag, MenuItemTypes.configFolder.rawValue)
+        XCTAssertEqual(items[2].title, "Open Folder")
+        XCTAssertEqual(items[2].tag, MenuItemTypes.configFolder.rawValue)
+        XCTAssertTrue(items[2].isEnabled)
+    }
+
+    func testConfigFolderMenuTruncatesLongPath() {
+        let path = "/opt/homebrew/etc/wireguard/" + String(repeating: "long-name/", count: 8)
+        let items = buildConfigFolderMenuItems(configDirectory: path, target: nil, action: nil)
+        XCTAssertEqual(items.count, 3)
+        guard items.count == 3 else { return }
+        XCTAssertTrue(items[1].title.hasPrefix("Config folder: "))
+        XCTAssertTrue(items[1].title.contains("..."))
+        XCTAssertLessThanOrEqual(items[1].title.count, "Config folder: ".count + maxMenuItemChars + 3)
+        XCTAssertEqual(items[1].toolTip, path)
+    }
+
+    func testConfigDirectoryURLRejectsUnsafePaths() {
+        XCTAssertNil(configDirectoryURL(from: ""))
+        XCTAssertNil(configDirectoryURL(from: "etc/wireguard"))
+        XCTAssertNil(configDirectoryURL(from: "/etc/../private/wireguard"))
+    }
+
     func testBuildDisableAllMenuItems() {
         var tunnels = testTunnels
         tunnels[0].interface = "utun1"

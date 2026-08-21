@@ -13,6 +13,11 @@ extension AppDelegate {
         }
     }
 
+    @objc func openConfigFolder(_: Any?) {
+        guard let url = configDirectoryURL(from: configDirectory) else { return }
+        NSWorkspace.shared.open(url)
+    }
+
     @objc func disableAllTunnels(_: Any?) {
         for tunnel in tunnels where tunnel.connected || pendingTunnelOperations[tunnel.name] == true {
             setTunnelEnabled(tunnel.name, enabling: false)

@@ -73,6 +73,8 @@
 		A101000021CD90000001F413 /* AppDelegate+TunnelMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001F411 /* AppDelegate+TunnelMenu.swift */; };
 		A101000021CD90000001F422 /* DisableAllMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001F421 /* DisableAllMenu.swift */; };
 		A101000021CD90000001F423 /* DisableAllMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001F421 /* DisableAllMenu.swift */; };
+		A101000021CD90000001F642 /* ConfigFolderMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001F641 /* ConfigFolderMenu.swift */; };
+		A101000021CD90000001F643 /* ConfigFolderMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001F641 /* ConfigFolderMenu.swift */; };
 		A101000021CD90000001F203 /* TunnelMenuSwitchViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001F201 /* TunnelMenuSwitchViews.swift */; };
 		A101000021CD90000001F502 /* MenuSwitchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001F501 /* MenuSwitchTests.swift */; };
 		A101000021CD90000001F602 /* TunnelRestore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101000021CD90000001F601 /* TunnelRestore.swift */; };
@@ -174,6 +176,7 @@
 		A101000021CD90000001F401 /* MenuBuildOptions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBuildOptions.swift; sourceTree = "<group>"; };
 		A101000021CD90000001F411 /* AppDelegate+TunnelMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+TunnelMenu.swift"; sourceTree = "<group>"; };
 		A101000021CD90000001F421 /* DisableAllMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisableAllMenu.swift; sourceTree = "<group>"; };
+		A101000021CD90000001F641 /* ConfigFolderMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigFolderMenu.swift; sourceTree = "<group>"; };
 		A101000021CD90000001F601 /* TunnelRestore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TunnelRestore.swift; sourceTree = "<group>"; };
 		A101000021CD90000001F611 /* TunnelRestoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TunnelRestoreTests.swift; sourceTree = "<group>"; };
 		A101000021CD90000001F621 /* LoginItemService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginItemService.swift; sourceTree = "<group>"; };
@@ -289,6 +292,7 @@
 				A101000021CD90000001F201 /* TunnelMenuSwitchViews.swift */,
 				A101000021CD90000001F401 /* MenuBuildOptions.swift */,
 				A101000021CD90000001F421 /* DisableAllMenu.swift */,
+				A101000021CD90000001F641 /* ConfigFolderMenu.swift */,
 				A101000021CD90000001F411 /* AppDelegate+TunnelMenu.swift */,
 				A101000021CD90000001F601 /* TunnelRestore.swift */,
 				A101000021CD90000001F621 /* LoginItemService.swift */,
@@ -575,6 +579,7 @@
 				A101000021CD90000001F203 /* TunnelMenuSwitchViews.swift in Sources */,
 				A101000021CD90000001F403 /* MenuBuildOptions.swift in Sources */,
 				A101000021CD90000001F423 /* DisableAllMenu.swift in Sources */,
+				A101000021CD90000001F643 /* ConfigFolderMenu.swift in Sources */,
 				A101000021CD90000001F413 /* AppDelegate+TunnelMenu.swift in Sources */,
 				A101000021CD90000001F603 /* TunnelRestore.swift in Sources */,
 				A101000021CD90000001F623 /* LoginItemService.swift in Sources */,
@@ -601,6 +606,7 @@
 				A101000021CD90000001F202 /* TunnelMenuSwitchViews.swift in Sources */,
 				A101000021CD90000001F402 /* MenuBuildOptions.swift in Sources */,
 				A101000021CD90000001F422 /* DisableAllMenu.swift in Sources */,
+				A101000021CD90000001F642 /* ConfigFolderMenu.swift in Sources */,
 				A101000021CD90000001F412 /* AppDelegate+TunnelMenu.swift in Sources */,
 				A101000021CD90000001F602 /* TunnelRestore.swift in Sources */,
 				A101000021CD90000001F622 /* LoginItemService.swift in Sources */,

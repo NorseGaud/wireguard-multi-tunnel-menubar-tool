@@ -37,6 +37,7 @@ Communication uses simple, typed primitives (no arbitrary shell commands from th
 | Method | Purpose |
 |--------|---------|
 | `getTunnels` | Tunnel names, interface names, and censored config text |
+| `getConfigDirectory` | Absolute path of the WireGuard config folder |
 | `setTunnel(tunnelName:enable:)` | Bring a tunnel up or down via `wg-quick` |
 | `getVersion` | Helper bundle version (for update detection) |
 | `wireguardInstalled` | Whether validated `wg` and `wg-quick` binaries exist |
