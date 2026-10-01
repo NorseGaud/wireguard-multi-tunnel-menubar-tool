@@ -5,6 +5,8 @@ import Foundation
 let runPath = "/var/run/wireguard"
 /// Symlinks with wg-quick-compatible names for tunnels whose config basename exceeds 15 characters
 let wgQuickAliasPath = "/var/run/wireguard-multitunnel"
+/// Root-owned copy of wg-quick whose route monitor ignores RTM_MISS events
+let routeMissIgnoringWgQuickPath = "\(wgQuickAliasPath)/wg-quick"
 
 let wireguardInstallURL =
     "https://www.wireguard.com/install/" +

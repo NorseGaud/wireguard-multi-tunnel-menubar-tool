@@ -39,6 +39,23 @@ struct WireGuard {
         return "wg-" + hashPrefix
     }
 
+    static let wgQuickRouteEventFilter = "[[ $event == RTM_* ]] || continue"
+    static let wgQuickRouteMissFilter = "[[ $event == RTM_MISS* ]] && continue"
+
+    /// wg-quick's route monitor re-applies endpoint routes and DNS (networksetup on every network service)
+    /// for each RTM_* event. RTM_MISS only reports a failed route lookup, so a process that probes an
+    /// unroutable address (eg: IPv6 DNS without IPv6 connectivity) keeps configd and airportd at full CPU.
+    /// Returns nil when the script has no monitor filter to patch or already ignores RTM_MISS.
+    static func ignoreRouteMissEvents(inWgQuickScript wgQuickScript: String) -> String? {
+        guard wgQuickScript.contains(wgQuickRouteEventFilter),
+              !wgQuickScript.contains(wgQuickRouteMissFilter)
+        else {
+            return nil
+        }
+        return wgQuickScript.replacingOccurrences(of: wgQuickRouteEventFilter,
+                                                  with: "\(wgQuickRouteEventFilter); \(wgQuickRouteMissFilter)")
+    }
+
     /// censor sensitive information like private keys from configuration data
     static func censorConfigurationData(_ configData: String) -> String {
         // swiftlint:disable:next force_try
@@ -161,9 +178,36 @@ struct WireGuard {
         }
     }
 
-    private func createConfigAlias(configFile: String, wgQuickName: String) throws -> String {
+    private func createWgQuickAliasDirectory() throws {
         try FileManager.default.createDirectory(atPath: wgQuickAliasPath,
                                                 withIntermediateDirectories: true)
+    }
+
+    /// Path to run instead of `quickBinPath`; falls back to `quickBinPath` when patching is not possible.
+    private func routeMissIgnoringWgQuick(_ quickBinPath: String) -> String {
+        guard let originalScript = try? String(contentsOfFile: quickBinPath, encoding: .utf8),
+              let patchedScript = WireGuard.ignoreRouteMissEvents(inWgQuickScript: originalScript)
+        else {
+            return quickBinPath
+        }
+
+        do {
+            try createWgQuickAliasDirectory()
+            let currentPatchedScript = try? String(contentsOfFile: routeMissIgnoringWgQuickPath, encoding: .utf8)
+            if currentPatchedScript != patchedScript {
+                try patchedScript.write(toFile: routeMissIgnoringWgQuickPath, atomically: true, encoding: .utf8)
+            }
+            try FileManager.default.setAttributes([.posixPermissions: 0o755],
+                                                  ofItemAtPath: routeMissIgnoringWgQuickPath)
+            return routeMissIgnoringWgQuickPath
+        } catch {
+            NSLog("Failed to write patched wg-quick, using '\(quickBinPath)': \(error.localizedDescription)")
+            return quickBinPath
+        }
+    }
+
+    private func createConfigAlias(configFile: String, wgQuickName: String) throws -> String {
+        try createWgQuickAliasDirectory()
         let aliasConfigFile = "\(wgQuickAliasPath)/\(wgQuickName).conf"
         if FileManager.default.fileExists(atPath: aliasConfigFile) {
             try FileManager.default.removeItem(atPath: aliasConfigFile)
@@ -198,7 +242,7 @@ struct WireGuard {
         }
 
         let task = Process()
-        task.launchPath = quickBinPath
+        task.launchPath = routeMissIgnoringWgQuick(quickBinPath)
         task.arguments = arguments
         // Add brew bin to path as wg-quick requires Bash 4 instead of macOS provided Bash 3
         task.environment = ["PATH": "\(brewPrefix)/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"]

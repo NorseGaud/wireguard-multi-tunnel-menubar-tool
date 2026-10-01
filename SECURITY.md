@@ -89,6 +89,7 @@ The helper executes external tools only after path validation (`PathSecurity`):
 - **`brewPrefix`** — must be an absolute directory path; symlinks are resolved; `..` segments are rejected. Default: `/opt/homebrew`. Configs are read from `${brewPrefix}/etc/wireguard`.
 - **`wgquickBinPath`** — optional override via root `defaults`; must be an absolute path whose last component is exactly `wg-quick`, must exist as a non-directory file, and must be executable when checked by `wireguardInstalled`.
 - **`wg`** — derived as `${brewPrefix}/bin/wg` (same validation rules for executables).
+- **Patched `wg-quick`** — before each run, the helper copies the validated `wg-quick` to `/var/run/wireguard-multitunnel/wg-quick` (root-owned, mode `0755`). The copy has one change: its route monitor ignores `RTM_MISS` events. Without this change, each failed route lookup makes the monitor run `networksetup` on all network services, and `configd` and `airportd` use full CPU. If the helper cannot patch or write the copy, it runs the original `wg-quick`.
 
 Invalid `defaults` values are logged and the helper falls back to defaults rather than using an unsafe path.
 

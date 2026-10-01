@@ -34,6 +34,29 @@ class HelperTests: XCTestCase {
         XCTAssertEqual(alias, WireGuard.wgQuickInterfaceName(for: "WireGuard-nathan"))
     }
 
+    func testIgnoreRouteMissEventsPatchesMonitorFilter() {
+        let monitorLoop = """
+        \twhile read -u 19 -r event; do
+        \t\t[[ $event == RTM_* ]] || continue
+        \t\tifconfig "$REAL_INTERFACE" >/dev/null 2>&1 || break
+        """
+        let patched = WireGuard.ignoreRouteMissEvents(inWgQuickScript: monitorLoop)
+        XCTAssertEqual(patched, """
+        \twhile read -u 19 -r event; do
+        \t\t[[ $event == RTM_* ]] || continue; [[ $event == RTM_MISS* ]] && continue
+        \t\tifconfig "$REAL_INTERFACE" >/dev/null 2>&1 || break
+        """)
+    }
+
+    func testIgnoreRouteMissEventsSkipsScriptsWithoutMonitorFilter() {
+        XCTAssertNil(WireGuard.ignoreRouteMissEvents(inWgQuickScript: "#!/bin/sh\nexit 0\n"))
+    }
+
+    func testIgnoreRouteMissEventsSkipsAlreadyPatchedScripts() throws {
+        let patched = try XCTUnwrap(WireGuard.ignoreRouteMissEvents(inWgQuickScript: WireGuard.wgQuickRouteEventFilter))
+        XCTAssertNil(WireGuard.ignoreRouteMissEvents(inWgQuickScript: patched))
+    }
+
     func testGetConfigDirectory() {
         let expectation = XCTestExpectation(description: "config directory")
         Helper().getConfigDirectory { path in
