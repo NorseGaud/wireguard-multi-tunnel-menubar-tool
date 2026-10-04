@@ -183,27 +183,53 @@ struct WireGuard {
                                                 withIntermediateDirectories: true)
     }
 
-    /// Path to run instead of `quickBinPath`; falls back to `quickBinPath` when patching is not possible.
-    private func routeMissIgnoringWgQuick(_ quickBinPath: String) -> String {
-        guard let originalScript = try? String(contentsOfFile: quickBinPath, encoding: .utf8),
-              let patchedScript = WireGuard.ignoreRouteMissEvents(inWgQuickScript: originalScript)
-        else {
+    /// root runs the patched copy, so only root may replace it or its directory
+    private static let rootOwnedExecutableAttributes: [FileAttributeKey: Any] = [
+        .ownerAccountID: 0,
+        .groupOwnerAccountID: 0,
+        .posixPermissions: 0o755,
+    ]
+
+    private func installedRouteMissIgnoringWgQuickScript() -> String? {
+        try? String(contentsOfFile: routeMissIgnoringWgQuickPath, encoding: .utf8)
+    }
+
+    /// Writes the RTM_MISS-ignoring copy of `quickBinPath` when missing or stale, then verifies it.
+    /// Returns the path to run; falls back to `quickBinPath` when the patch cannot be applied.
+    @discardableResult
+    func routeMissIgnoringWgQuick(for quickBinPath: String) -> String {
+        guard let originalScript = try? String(contentsOfFile: quickBinPath, encoding: .utf8) else {
+            NSLog("Cannot read '\(quickBinPath)' to patch it, using it unchanged")
+            return quickBinPath
+        }
+        guard let patchedScript = WireGuard.ignoreRouteMissEvents(inWgQuickScript: originalScript) else {
+            NSLog("'\(quickBinPath)' has no route monitor filter to patch or already ignores RTM_MISS, " +
+                "using it unchanged")
             return quickBinPath
         }
 
         do {
-            try createWgQuickAliasDirectory()
-            let currentPatchedScript = try? String(contentsOfFile: routeMissIgnoringWgQuickPath, encoding: .utf8)
-            if currentPatchedScript != patchedScript {
+            let fileManager = FileManager.default
+            try fileManager.createDirectory(atPath: routeMissIgnoringWgQuickDirectory,
+                                            withIntermediateDirectories: true)
+            try fileManager.setAttributes(WireGuard.rootOwnedExecutableAttributes,
+                                          ofItemAtPath: routeMissIgnoringWgQuickDirectory)
+            if installedRouteMissIgnoringWgQuickScript() != patchedScript {
+                NSLog("Writing RTM_MISS-ignoring wg-quick to '\(routeMissIgnoringWgQuickPath)'")
                 try patchedScript.write(toFile: routeMissIgnoringWgQuickPath, atomically: true, encoding: .utf8)
             }
-            try FileManager.default.setAttributes([.posixPermissions: 0o755],
-                                                  ofItemAtPath: routeMissIgnoringWgQuickPath)
-            return routeMissIgnoringWgQuickPath
+            try fileManager.setAttributes(WireGuard.rootOwnedExecutableAttributes,
+                                          ofItemAtPath: routeMissIgnoringWgQuickPath)
         } catch {
             NSLog("Failed to write patched wg-quick, using '\(quickBinPath)': \(error.localizedDescription)")
             return quickBinPath
         }
+
+        guard installedRouteMissIgnoringWgQuickScript() == patchedScript else {
+            NSLog("Patched wg-quick at '\(routeMissIgnoringWgQuickPath)' failed verification, using '\(quickBinPath)'")
+            return quickBinPath
+        }
+        return routeMissIgnoringWgQuickPath
     }
 
     private func createConfigAlias(configFile: String, wgQuickName: String) throws -> String {
@@ -242,7 +268,7 @@ struct WireGuard {
         }
 
         let task = Process()
-        task.launchPath = routeMissIgnoringWgQuick(quickBinPath)
+        task.launchPath = routeMissIgnoringWgQuick(for: quickBinPath)
         task.arguments = arguments
         // Add brew bin to path as wg-quick requires Bash 4 instead of macOS provided Bash 3
         task.environment = ["PATH": "\(brewPrefix)/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"]

@@ -89,7 +89,12 @@ The helper executes external tools only after path validation (`PathSecurity`):
 - **`brewPrefix`** — must be an absolute directory path; symlinks are resolved; `..` segments are rejected. Default: `/opt/homebrew`. Configs are read from `${brewPrefix}/etc/wireguard`.
 - **`wgquickBinPath`** — optional override via root `defaults`; must be an absolute path whose last component is exactly `wg-quick`, must exist as a non-directory file, and must be executable when checked by `wireguardInstalled`.
 - **`wg`** — derived as `${brewPrefix}/bin/wg` (same validation rules for executables).
-- **Patched `wg-quick`** — before each run, the helper copies the validated `wg-quick` to `/var/run/wireguard-multitunnel/wg-quick` (root-owned, mode `0755`). The copy has one change: its route monitor ignores `RTM_MISS` events. Without this change, each failed route lookup makes the monitor run `networksetup` on all network services, and `configd` and `airportd` use full CPU. If the helper cannot patch or write the copy, it runs the original `wg-quick`.
+- **Patched `wg-quick`** — the helper copies the validated `wg-quick` to `/Library/Application Support/WireGuardMultiTunnel/wg-quick`. The copy has one change: its route monitor ignores `RTM_MISS` events. Without this change, each failed route lookup makes the monitor run `networksetup` on all network services, and `configd` and `airportd` use full CPU.
+  - The helper applies the patch when it starts (on install and on each app launch) and again before each `wg-quick` run. It rewrites the copy when the copy is missing or does not match the patched Homebrew `wg-quick` (for example, after `brew upgrade`).
+  - The helper sets the directory and the copy to `root:wheel`, mode `0755`, and reads the copy again to verify it.
+  - The copy stays after reboot, so scripts outside the app (for example, sleepwatcher wake hooks) can run it.
+  - If the helper cannot patch, write, or verify the copy, it logs the cause and runs the original `wg-quick`.
+  - `Misc/Uninstall.sh` removes the directory.
 
 Invalid `defaults` values are logged and the helper falls back to defaults rather than using an unsafe path.
 

@@ -5,8 +5,11 @@ import Foundation
 let runPath = "/var/run/wireguard"
 /// Symlinks with wg-quick-compatible names for tunnels whose config basename exceeds 15 characters
 let wgQuickAliasPath = "/var/run/wireguard-multitunnel"
+/// Outside /var/run so the patched wg-quick survives reboot and scripts outside the app
+/// (eg: sleepwatcher wake hooks) can always run it
+let routeMissIgnoringWgQuickDirectory = "/Library/Application Support/WireGuardMultiTunnel"
 /// Root-owned copy of wg-quick whose route monitor ignores RTM_MISS events
-let routeMissIgnoringWgQuickPath = "\(wgQuickAliasPath)/wg-quick"
+let routeMissIgnoringWgQuickPath = "\(routeMissIgnoringWgQuickDirectory)/wg-quick"
 
 let wireguardInstallURL =
     "https://www.wireguard.com/install/" +

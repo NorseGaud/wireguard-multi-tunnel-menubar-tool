@@ -72,6 +72,10 @@ class Helper: NSObject, HelperProtocol, SKQueueDelegate {
 
     /// Starts the helper daemon
     func run() {
+        // launchd starts the helper on install and on each App launch; scripts outside the App
+        // depend on the patched wg-quick before any tunnel starts
+        wireguard.routeMissIgnoringWgQuick(for: wgquickBinPath)
+
         // create XPC to App
         app = AppXPC(exportedObject: self, onConnect: abortShutdown, onClose: shutdown)
 

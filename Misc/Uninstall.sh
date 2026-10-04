@@ -25,6 +25,9 @@ sudo rm -rf \
   /Applications/WireGuardMultiTunnel.app \
   /Applications/WireGuardStatusbar.app
 
+# Patched wg-quick copy
+sudo rm -rf "/Library/Application Support/WireGuardMultiTunnel"
+
 # User settings (current and former domains)
 for domain in WireGuardMultiTunnel WireGuardStatusbar WireGuardMultiTunnelHelper WireGuardStatusbarHelper
 do
