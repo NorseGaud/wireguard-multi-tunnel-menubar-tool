@@ -9,9 +9,9 @@
 	<key>CFBundleName</key>
 	<string>WireGuardMultiTunnelHelper</string>
 	<key>CFBundleShortVersionString</key>
-	<string>2.4.0</string>
+	<string>2.5.0</string>
 	<key>CFBundleVersion</key>
-	<string>170</string>
+	<string>171</string>
 	<key>Hash</key>
 	<string>303e3fef62e57d3b185e15d2fb15ab21</string>
 	<key>SMAuthorizedClients</key>
@@ -19,6 +19,6 @@
 		<string>anchor apple generic and identifier "WireGuardMultiTunnel" and certificate leaf[subject.OU] = "4JD8RUCQ2W"</string>
 	</array>
 	<key>SOURCE_HASH</key>
-	<string>2e7d20f9542b1b631818f62a461e97ec</string>
+	<string>05f981361f2638d4df9899ad4a91a690</string>
 </dict>
 </plist>
