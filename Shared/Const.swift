@@ -7,9 +7,9 @@ let runPath = "/var/run/wireguard"
 let wgQuickAliasPath = "/var/run/wireguard-multitunnel"
 /// Outside /var/run so the patched wg-quick survives reboot and scripts outside the app
 /// (eg: sleepwatcher wake hooks) can always run it
-let routeMissIgnoringWgQuickDirectory = "/Library/Application Support/WireGuardMultiTunnel"
-/// Root-owned copy of wg-quick whose route monitor ignores RTM_MISS events
-let routeMissIgnoringWgQuickPath = "\(routeMissIgnoringWgQuickDirectory)/wg-quick"
+let patchedWgQuickDirectory = "/Library/Application Support/WireGuardMultiTunnel"
+/// Root-owned copy of wg-quick from `WireGuard.wgQuickScriptEdits`
+let patchedWgQuickPath = "\(patchedWgQuickDirectory)/wg-quick"
 
 let wireguardInstallURL =
     "https://www.wireguard.com/install/" +

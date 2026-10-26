@@ -34,27 +34,53 @@ class HelperTests: XCTestCase {
         XCTAssertEqual(alias, WireGuard.wgQuickInterfaceName(for: "WireGuard-nathan"))
     }
 
-    func testIgnoreRouteMissEventsPatchesMonitorFilter() {
-        let monitorLoop = """
-        \twhile read -u 19 -r event; do
-        \t\t[[ $event == RTM_* ]] || continue
-        \t\tifconfig "$REAL_INTERFACE" >/dev/null 2>&1 || break
-        """
-        let patched = WireGuard.ignoreRouteMissEvents(inWgQuickScript: monitorLoop)
+    /// Lines of the upstream Darwin wg-quick that `WireGuard.wgQuickScriptEdits` anchor on
+    let upstreamWgQuickExcerpt = """
+    \t[[ ${#DNS[@]} -gt 0 ]] && trap set_dns ALRM
+    \twhile read -u 19 -r event; do
+    \t\t[[ $event == RTM_* ]] || continue
+    \t\tifconfig "$REAL_INTERFACE" >/dev/null 2>&1 || break
+    \t\tif [[ ${#DNS[@]} -gt 0 ]]; then
+    \t\t\tset_dns
+    \t\t\tsleep 2 && kill -ALRM $bpid 2>/dev/null &
+    \t\tfi
+    \tdone
+    # ~~ function override insertion point ~~
+
+    """
+
+    func testPatchWgQuickScriptAppliesEveryEdit() throws {
+        let patched = try XCTUnwrap(WireGuard.patchWgQuickScript(upstreamWgQuickExcerpt))
         XCTAssertEqual(patched, """
+        \t[[ ${#DNS[@]} -gt 0 ]] && trap 'dns_alarm_pending=0; set_dns' ALRM
         \twhile read -u 19 -r event; do
         \t\t[[ $event == RTM_* ]] || continue; [[ $event == RTM_MISS* ]] && continue
         \t\tifconfig "$REAL_INTERFACE" >/dev/null 2>&1 || break
+        \t\tif [[ ${#DNS[@]} -gt 0 ]]; then
+        \t\t\tif [[ $dns_alarm_pending != 1 ]]; then
+        \t\t\t\tdns_alarm_pending=1
+        \t\t\t\tsleep 2 && kill -ALRM $bpid 2>/dev/null &
+        \t\t\tfi
+        \t\tfi
+        \tdone
+        # ~~ function override insertion point ~~
+
+        \(WireGuard.wgQuickSetDnsWhenChanged)
+
+
         """)
     }
 
-    func testIgnoreRouteMissEventsSkipsScriptsWithoutMonitorFilter() {
-        XCTAssertNil(WireGuard.ignoreRouteMissEvents(inWgQuickScript: "#!/bin/sh\nexit 0\n"))
+    func testPatchWgQuickScriptSkipsScriptsMissingAnAnchor() {
+        XCTAssertNil(WireGuard.patchWgQuickScript("#!/bin/sh\nexit 0\n"))
+        let withoutInsertionPoint = upstreamWgQuickExcerpt
+            .replacingOccurrences(of: WireGuard.wgQuickOverrideInsertionPoint, with: "")
+        XCTAssertNil(WireGuard.patchWgQuickScript(withoutInsertionPoint))
     }
 
-    func testIgnoreRouteMissEventsSkipsAlreadyPatchedScripts() throws {
-        let patched = try XCTUnwrap(WireGuard.ignoreRouteMissEvents(inWgQuickScript: WireGuard.wgQuickRouteEventFilter))
-        XCTAssertNil(WireGuard.ignoreRouteMissEvents(inWgQuickScript: patched))
+    func testPatchWgQuickScriptSkipsAlreadyPatchedScripts() throws {
+        let patched = try XCTUnwrap(WireGuard.patchWgQuickScript(upstreamWgQuickExcerpt))
+        XCTAssertNil(WireGuard.patchWgQuickScript(patched))
     }
 
     func testGetConfigDirectory() {

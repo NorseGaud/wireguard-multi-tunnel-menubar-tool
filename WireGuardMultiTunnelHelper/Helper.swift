@@ -74,7 +74,7 @@ class Helper: NSObject, HelperProtocol, SKQueueDelegate {
     func run() {
         // launchd starts the helper on install and on each App launch; scripts outside the App
         // depend on the patched wg-quick before any tunnel starts
-        wireguard.routeMissIgnoringWgQuick(for: wgquickBinPath)
+        wireguard.patchedWgQuick(for: wgquickBinPath)
 
         // create XPC to App
         app = AppXPC(exportedObject: self, onConnect: abortShutdown, onClose: shutdown)
@@ -95,7 +95,9 @@ class Helper: NSObject, HelperProtocol, SKQueueDelegate {
         }
         for directory in wireguard.configPaths + [runPath] {
             // skip already watched paths
-            if queue!.isPathWatched(directory) { continue }
+            if queue!.isPathWatched(directory) {
+                continue
+            }
 
             if FileManager.default.fileExists(atPath: directory) {
                 NSLog("Watching \(directory) for changes")

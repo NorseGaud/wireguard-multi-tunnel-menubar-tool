@@ -36,7 +36,9 @@ class HelperXPC {
         // Get the current helper connection and return the remote object (Helper.swift)
         // as a proxy object to call functions on.
         guard let helper = helperConnection()?.remoteObjectProxyWithErrorHandler({ _ in
-            if let onCompletion = completion { onCompletion(false) }
+            if let onCompletion = completion {
+                onCompletion(false)
+            }
         }) as? HelperProtocol else { return nil }
         return helper
     }

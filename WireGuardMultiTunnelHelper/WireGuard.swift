@@ -39,23 +39,6 @@ struct WireGuard {
         return "wg-" + hashPrefix
     }
 
-    static let wgQuickRouteEventFilter = "[[ $event == RTM_* ]] || continue"
-    static let wgQuickRouteMissFilter = "[[ $event == RTM_MISS* ]] && continue"
-
-    /// wg-quick's route monitor re-applies endpoint routes and DNS (networksetup on every network service)
-    /// for each RTM_* event. RTM_MISS only reports a failed route lookup, so a process that probes an
-    /// unroutable address (eg: IPv6 DNS without IPv6 connectivity) keeps configd and airportd at full CPU.
-    /// Returns nil when the script has no monitor filter to patch or already ignores RTM_MISS.
-    static func ignoreRouteMissEvents(inWgQuickScript wgQuickScript: String) -> String? {
-        guard wgQuickScript.contains(wgQuickRouteEventFilter),
-              !wgQuickScript.contains(wgQuickRouteMissFilter)
-        else {
-            return nil
-        }
-        return wgQuickScript.replacingOccurrences(of: wgQuickRouteEventFilter,
-                                                  with: "\(wgQuickRouteEventFilter); \(wgQuickRouteMissFilter)")
-    }
-
     /// censor sensitive information like private keys from configuration data
     static func censorConfigurationData(_ configData: String) -> String {
         // swiftlint:disable:next force_try
@@ -190,46 +173,45 @@ struct WireGuard {
         .posixPermissions: 0o755,
     ]
 
-    private func installedRouteMissIgnoringWgQuickScript() -> String? {
-        try? String(contentsOfFile: routeMissIgnoringWgQuickPath, encoding: .utf8)
+    private func installedPatchedWgQuickScript() -> String? {
+        try? String(contentsOfFile: patchedWgQuickPath, encoding: .utf8)
     }
 
-    /// Writes the RTM_MISS-ignoring copy of `quickBinPath` when missing or stale, then verifies it.
+    /// Writes the patched copy of `quickBinPath` when missing or stale, then verifies it.
     /// Returns the path to run; falls back to `quickBinPath` when the patch cannot be applied.
     @discardableResult
-    func routeMissIgnoringWgQuick(for quickBinPath: String) -> String {
+    func patchedWgQuick(for quickBinPath: String) -> String {
         guard let originalScript = try? String(contentsOfFile: quickBinPath, encoding: .utf8) else {
             NSLog("Cannot read '\(quickBinPath)' to patch it, using it unchanged")
             return quickBinPath
         }
-        guard let patchedScript = WireGuard.ignoreRouteMissEvents(inWgQuickScript: originalScript) else {
-            NSLog("'\(quickBinPath)' has no route monitor filter to patch or already ignores RTM_MISS, " +
-                "using it unchanged")
+        guard let patchedScript = WireGuard.patchWgQuickScript(originalScript) else {
+            NSLog("Cannot patch '\(quickBinPath)' or it is already patched, using it unchanged")
             return quickBinPath
         }
 
         do {
             let fileManager = FileManager.default
-            try fileManager.createDirectory(atPath: routeMissIgnoringWgQuickDirectory,
+            try fileManager.createDirectory(atPath: patchedWgQuickDirectory,
                                             withIntermediateDirectories: true)
             try fileManager.setAttributes(WireGuard.rootOwnedExecutableAttributes,
-                                          ofItemAtPath: routeMissIgnoringWgQuickDirectory)
-            if installedRouteMissIgnoringWgQuickScript() != patchedScript {
-                NSLog("Writing RTM_MISS-ignoring wg-quick to '\(routeMissIgnoringWgQuickPath)'")
-                try patchedScript.write(toFile: routeMissIgnoringWgQuickPath, atomically: true, encoding: .utf8)
+                                          ofItemAtPath: patchedWgQuickDirectory)
+            if installedPatchedWgQuickScript() != patchedScript {
+                NSLog("Writing patched wg-quick to '\(patchedWgQuickPath)'")
+                try patchedScript.write(toFile: patchedWgQuickPath, atomically: true, encoding: .utf8)
             }
             try fileManager.setAttributes(WireGuard.rootOwnedExecutableAttributes,
-                                          ofItemAtPath: routeMissIgnoringWgQuickPath)
+                                          ofItemAtPath: patchedWgQuickPath)
         } catch {
             NSLog("Failed to write patched wg-quick, using '\(quickBinPath)': \(error.localizedDescription)")
             return quickBinPath
         }
 
-        guard installedRouteMissIgnoringWgQuickScript() == patchedScript else {
-            NSLog("Patched wg-quick at '\(routeMissIgnoringWgQuickPath)' failed verification, using '\(quickBinPath)'")
+        guard installedPatchedWgQuickScript() == patchedScript else {
+            NSLog("Patched wg-quick at '\(patchedWgQuickPath)' failed verification, using '\(quickBinPath)'")
             return quickBinPath
         }
-        return routeMissIgnoringWgQuickPath
+        return patchedWgQuickPath
     }
 
     private func createConfigAlias(configFile: String, wgQuickName: String) throws -> String {
@@ -268,7 +250,7 @@ struct WireGuard {
         }
 
         let task = Process()
-        task.launchPath = routeMissIgnoringWgQuick(for: quickBinPath)
+        task.launchPath = patchedWgQuick(for: quickBinPath)
         task.arguments = arguments
         // Add brew bin to path as wg-quick requires Bash 4 instead of macOS provided Bash 3
         task.environment = ["PATH": "\(brewPrefix)/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"]
@@ -295,5 +277,80 @@ struct WireGuard {
         }
 
         return (task.terminationStatus == 0, errorMessage)
+    }
+}
+
+/// Edits for the root-owned wg-quick copy that the helper runs
+extension WireGuard {
+    struct WgQuickScriptEdit {
+        let anchor: String
+        let replacement: String
+    }
+
+    static let wgQuickRouteEventFilter = "[[ $event == RTM_* ]] || continue"
+    static let wgQuickOverrideInsertionPoint = "# ~~ function override insertion point ~~"
+    static let wgQuickDnsAlarmPendingFlag = "dns_alarm_pending"
+
+    static let wgQuickSetDnsWhenChanged = """
+    current_service_dns_setting() {
+    \tlocal response
+    \tresponse="$(networksetup "$1" "$2")"
+    \t[[ $response == *" "* ]] && response="Empty"
+    \tprintf '%s' "${response//$'\\n'/ }"
+    }
+
+    set_dns() {
+    \tcollect_new_service_dns
+    \tlocal service response desired_dns_search=( Empty )
+    \t[[ ${#DNS_SEARCH[@]} -eq 0 ]] || desired_dns_search=( "${DNS_SEARCH[@]}" )
+    \tfor service in "${!SERVICE_DNS[@]}"; do
+    \t\twhile read -r response; do
+    \t\t\t[[ $response == *Error* ]] && echo "$response" >&2
+    \t\tdone < <(
+    \t\t\t[[ $(current_service_dns_setting -getdnsservers "$service") == "${DNS[*]}" ]] ||
+    \t\t\t\tcmd networksetup -setdnsservers "$service" "${DNS[@]}"
+    \t\t\t[[ $(current_service_dns_setting -getsearchdomains "$service") == "${desired_dns_search[*]}" ]] ||
+    \t\t\t\tcmd networksetup -setsearchdomains "$service" "${desired_dns_search[@]}"
+    \t\t)
+    \tdone
+    }
+    """
+
+    /// wg-quick's Darwin route monitor re-applies DNS on every network service for each RTM_* event, and
+    /// set_dns writes the settings even when they did not change. Each write wakes configd and airportd, so a
+    /// stream of route events (eg: failed lookups, ARP churn on a lossy link) keeps both at full CPU and the
+    /// Wi-Fi menu stalls until airportd answers.
+    static let wgQuickScriptEdits = [
+        // RTM_MISS only reports a failed route lookup
+        WgQuickScriptEdit(anchor: wgQuickRouteEventFilter,
+                          replacement: "\(wgQuickRouteEventFilter); [[ $event == RTM_MISS* ]] && continue"),
+        // apply DNS once per burst of route events, from the existing 2 second alarm
+        WgQuickScriptEdit(anchor: "trap set_dns ALRM",
+                          replacement: "trap '\(wgQuickDnsAlarmPendingFlag)=0; set_dns' ALRM"),
+        WgQuickScriptEdit(anchor: "\t\t\tset_dns\n\t\t\tsleep 2 && kill -ALRM $bpid 2>/dev/null &\n",
+                          replacement: """
+                          \t\t\tif [[ $\(wgQuickDnsAlarmPendingFlag) != 1 ]]; then
+                          \t\t\t\t\(wgQuickDnsAlarmPendingFlag)=1
+                          \t\t\t\tsleep 2 && kill -ALRM $bpid 2>/dev/null &
+                          \t\t\tfi
+
+                          """),
+        WgQuickScriptEdit(anchor: wgQuickOverrideInsertionPoint,
+                          replacement: "\(wgQuickOverrideInsertionPoint)\n\n\(wgQuickSetDnsWhenChanged)\n"),
+    ]
+
+    /// Returns nil when the script is already patched or lacks an anchor (eg: a changed upstream wg-quick),
+    /// so the caller runs it unchanged rather than a partly patched copy.
+    static func patchWgQuickScript(_ wgQuickScript: String) -> String? {
+        guard !wgQuickScript.contains(wgQuickDnsAlarmPendingFlag) else { return nil }
+        var patchedScript = wgQuickScript
+        for edit in wgQuickScriptEdits {
+            guard patchedScript.contains(edit.anchor) else {
+                NSLog("wg-quick script has no '\(edit.anchor)' to patch")
+                return nil
+            }
+            patchedScript = patchedScript.replacingOccurrences(of: edit.anchor, with: edit.replacement)
+        }
+        return patchedScript
     }
 }
